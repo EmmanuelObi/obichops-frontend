@@ -60,7 +60,10 @@ export function LoginForm() {
     }
 
     const session = await getSession();
-    if (session?.user?.mustChangePassword || session?.user?.needsProfileCompletion) {
+    if (
+      session?.user?.mustChangePassword ||
+      session?.user?.needsProfileCompletion
+    ) {
       router.push("/change-password");
       router.refresh();
       return;
@@ -136,7 +139,10 @@ export function LoginForm() {
         </Button>
 
         <p className="text-center text-sm text-muted-foreground">
-          <Link href="/forgot-password" className="text-primary hover:underline">
+          <Link
+            href="/forgot-password"
+            className="text-primary hover:underline"
+          >
             Forgot password?
           </Link>
         </p>

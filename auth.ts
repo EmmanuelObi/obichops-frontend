@@ -45,7 +45,8 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
             needsProfileCompletion: data.user.needsProfileCompletion ?? false,
             accessToken: data.token,
           };
-        } catch {
+        } catch (err) {
+          console.error("Credentials authorize failed:", err);
           return null;
         }
       },
