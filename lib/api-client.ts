@@ -1,3 +1,8 @@
+import {
+  notifyUnauthorized,
+  shouldSignOutOnUnauthorized,
+} from "@/lib/unauthorized-handler";
+
 const API_BASE_URL =
   process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:3001";
 
@@ -47,7 +52,13 @@ export async function apiFetch<T>(
         ? String((payload as { error: unknown }).error)
         : null) ??
       response.statusText;
-    throw new ApiError(response.status, message || "Request failed", payload);
+
+    const errorMessage = message || "Request failed";
+    if (shouldSignOutOnUnauthorized(response.status, errorMessage, Boolean(token))) {
+      notifyUnauthorized();
+    }
+
+    throw new ApiError(response.status, errorMessage, payload);
   }
 
   return payload as T;

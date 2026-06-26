@@ -19,6 +19,7 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
+import { PasswordInput } from "@/components/ui/password-input";
 
 const schema = z
   .object({
@@ -147,9 +148,8 @@ export function ChangePasswordForm() {
             <FormItem>
               <FormLabel>Temporary password</FormLabel>
               <FormControl>
-                <Input
+                <PasswordInput
                   {...field}
-                  type="password"
                   autoComplete="current-password"
                 />
               </FormControl>
@@ -165,7 +165,7 @@ export function ChangePasswordForm() {
             <FormItem>
               <FormLabel>New password</FormLabel>
               <FormControl>
-                <Input {...field} type="password" autoComplete="new-password" />
+                <PasswordInput {...field} autoComplete="new-password" />
               </FormControl>
               <FormMessage />
             </FormItem>
@@ -179,7 +179,7 @@ export function ChangePasswordForm() {
             <FormItem>
               <FormLabel>Confirm new password</FormLabel>
               <FormControl>
-                <Input {...field} type="password" autoComplete="new-password" />
+                <PasswordInput {...field} autoComplete="new-password" />
               </FormControl>
               <FormMessage />
             </FormItem>
