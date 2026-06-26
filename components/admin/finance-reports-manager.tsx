@@ -59,6 +59,12 @@ const PRESET_LABELS: Record<PeriodPreset, string> = {
   custom: "Custom range",
 };
 
+function rollingPeriodEnd(now: DateTime): string {
+  // Menu weeks are keyed by Monday weekStart. Weeks scheduled later in the
+  // current month (e.g. next Monday) must still appear in rolling reports.
+  return now.endOf("month").toISODate()!;
+}
+
 function resolvePresetRange(
   preset: PeriodPreset,
   timezone: string,
@@ -81,17 +87,17 @@ function resolvePresetRange(
     case "last_3_months":
       return {
         from: now.minus({ months: 3 }).startOf("month").toISODate()!,
-        to: now.endOf("day").toISODate()!,
+        to: rollingPeriodEnd(now),
       };
     case "last_6_months":
       return {
         from: now.minus({ months: 6 }).startOf("month").toISODate()!,
-        to: now.endOf("day").toISODate()!,
+        to: rollingPeriodEnd(now),
       };
     default:
       return {
         from: now.minus({ months: 3 }).startOf("month").toISODate()!,
-        to: now.endOf("day").toISODate()!,
+        to: rollingPeriodEnd(now),
       };
   }
 }
@@ -212,8 +218,10 @@ export function FinanceReportsManager() {
         <CardHeader>
           <CardTitle className="text-base">Report period</CardTitle>
           <CardDescription>
-            Summarise submitted orders for finance review. Dates use your
-            workspace timezone ({timezone.replace(/_/g, " ")}).
+            Summarise submitted orders for finance review. Menu weeks are
+            included by their Monday start date. Rolling periods run through the
+            end of the current month so upcoming weeks still appear. Dates use
+            your workspace timezone ({timezone.replace(/_/g, " ")}).
           </CardDescription>
         </CardHeader>
         <CardContent className="flex flex-col gap-4">
