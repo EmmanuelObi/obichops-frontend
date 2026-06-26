@@ -4,6 +4,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { signOut } from "next-auth/react";
 import {
+  BarChart3,
   Building2,
   CalendarDays,
   ClipboardList,
@@ -61,6 +62,12 @@ const adminNav: NavItem[] = [
     title: "Team",
     href: "/admin/allowed-emails",
     icon: Users,
+    roles: ["ADMIN"],
+  },
+  {
+    title: "Reporting",
+    href: "/admin/reports",
+    icon: BarChart3,
     roles: ["ADMIN"],
   },
 ];
