@@ -7,7 +7,7 @@ import { toast } from "sonner";
 
 import type { AdminWeekOrder } from "@/types/order";
 import type { ReminderLogEntry } from "@/types/reminders";
-import { REMINDER_LABELS } from "@/types/reminders";
+import { reminderLabel } from "@/types/reminders";
 import { EmptyState } from "@/components/layout/empty-state";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
@@ -297,7 +297,7 @@ export function WeekOrdersManager({ weekId }: WeekOrdersManagerProps) {
               ) : (
                 reminders.map((entry) => (
                   <TableRow key={entry.id}>
-                    <TableCell>{REMINDER_LABELS[entry.type]}</TableCell>
+                    <TableCell>{reminderLabel(entry.type)}</TableCell>
                     <TableCell>
                       {new Date(entry.sentAt).toLocaleString()}
                     </TableCell>

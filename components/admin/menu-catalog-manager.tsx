@@ -183,9 +183,11 @@ export function MenuCatalogManager({
     <div className="animate-fade-in space-y-6">
       <p className="text-sm text-muted-foreground">
         Persistent catalog for{" "}
-        <span className="font-medium text-foreground">{vendorName}</span>. Use the
-        toggle on each item to enable or disable it for that day — disabled items
-        are hidden from staff when ordering.
+        <span className="font-medium text-foreground">{vendorName}</span>.
+        Each item belongs to a specific day — e.g. fried rice can be on Tuesday
+        but not Wednesday. Add items under the day tab where they should appear,
+        or use the toggle to temporarily disable a day without deleting it.
+        Disabled items are hidden from staff when ordering.
       </p>
 
       {error ? (

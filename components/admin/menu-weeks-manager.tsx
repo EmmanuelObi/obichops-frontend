@@ -190,8 +190,17 @@ export function MenuWeeksManager() {
     if (!token) return;
     setError(null);
     try {
-      await apiClient(token).patch(`/admin/menu-weeks/${id}`, { status: "OPEN" });
-      toast.success("Week opened for ordering");
+      const result = await apiClient(token).patch<{
+        openNotificationSent?: boolean;
+        openNotificationError?: string;
+      }>(`/admin/menu-weeks/${id}`, { status: "OPEN" });
+      if (result.openNotificationError) {
+        toast.warning(`Week opened, but email failed: ${result.openNotificationError}`);
+      } else if (result.openNotificationSent) {
+        toast.success("Week opened — staff notified by email");
+      } else {
+        toast.success("Week opened for ordering");
+      }
       await load();
     } catch (err) {
       const message = err instanceof Error ? err.message : "Failed to open week";
