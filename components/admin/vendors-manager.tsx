@@ -170,9 +170,22 @@ export function VendorsManager() {
     setError(null);
     try {
       await apiClient(token).delete(`/admin/vendors/${id}`);
+      toast.success("Vendor deactivated");
       await load();
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to deactivate vendor");
+    }
+  }
+
+  async function activateVendor(id: string) {
+    if (!token) return;
+    setError(null);
+    try {
+      await apiClient(token).patch(`/admin/vendors/${id}`, { isActive: true });
+      toast.success("Vendor activated");
+      await load();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Failed to activate vendor");
     }
   }
 
@@ -333,7 +346,15 @@ export function VendorsManager() {
                         >
                           Deactivate
                         </Button>
-                      ) : null}
+                      ) : (
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => void activateVendor(vendor.id)}
+                        >
+                          Activate
+                        </Button>
+                      )}
                     </div>
                   </TableCell>
                 </TableRow>
