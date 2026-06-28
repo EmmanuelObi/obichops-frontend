@@ -1,7 +1,7 @@
 "use client";
 
 import { zodResolver } from "@hookform/resolvers/zod";
-import { getSession, signIn, useSession } from "next-auth/react";
+import { getSession, signIn, signOut, useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { useForm } from "react-hook-form";
@@ -25,7 +25,6 @@ const schema = z
   .object({
     firstName: z.string().trim().min(1, "First name is required"),
     lastName: z.string().trim().min(1, "Last name is required"),
-    currentPassword: z.string().min(1, "Temporary password is required"),
     password: z.string().min(8, "Use at least 8 characters"),
     confirmPassword: z.string().min(8, "Confirm your password"),
   })
@@ -48,7 +47,6 @@ export function CompleteProfileForm() {
     defaultValues: {
       firstName: "",
       lastName: "",
-      currentPassword: "",
       password: "",
       confirmPassword: "",
     },
@@ -66,7 +64,6 @@ export function CompleteProfileForm() {
     try {
       await changePassword(
         token,
-        values.currentPassword,
         values.password,
         {
           firstName: values.firstName,
@@ -143,23 +140,6 @@ export function CompleteProfileForm() {
 
         <FormField
           control={form.control}
-          name="currentPassword"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Temporary password</FormLabel>
-              <FormControl>
-                <PasswordInput
-                  {...field}
-                  autoComplete="current-password"
-                />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-
-        <FormField
-          control={form.control}
           name="password"
           render={({ field }) => (
             <FormItem>
@@ -194,6 +174,16 @@ export function CompleteProfileForm() {
           disabled={isSubmitting}
         >
           {isSubmitting ? "Saving…" : "Complete setup"}
+        </Button>
+
+        <Button
+          type="button"
+          variant="ghost"
+          size="lg"
+          className="h-11 w-full rounded-lg"
+          onClick={() => signOut({ callbackUrl: "/login" })}
+        >
+          Log out
         </Button>
       </form>
     </Form>

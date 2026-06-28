@@ -59,7 +59,7 @@ export function ChangePasswordForm() {
     setIsSubmitting(true);
 
     try {
-      await changePassword(token, values.currentPassword, values.password);
+      await changePassword(token, values.password, undefined, values.currentPassword);
 
       const result = await signIn("credentials", {
         email: session.user.email,
