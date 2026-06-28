@@ -65,7 +65,7 @@ export function LoginForm() {
       session?.user?.mustChangePassword ||
       session?.user?.needsProfileCompletion
     ) {
-      router.push("/change-password");
+      router.push("/complete-profile");
       router.refresh();
       return;
     }

@@ -14,10 +14,11 @@ export default auth((req) => {
   const isAdminRoute = pathname.startsWith("/admin");
   const isPlatformRoute = pathname.startsWith("/platform");
   const isStaffRoute = pathname.startsWith("/staff");
+  const isCompleteProfileRoute = pathname === "/complete-profile";
   const isChangePasswordRoute = pathname === "/change-password";
   const isProtectedRoute = isAdminRoute || isPlatformRoute || isStaffRoute;
 
-  if (isChangePasswordRoute) {
+  if (isCompleteProfileRoute || isChangePasswordRoute) {
     if (!session) {
       const loginUrl = new URL("/login", req.nextUrl.origin);
       loginUrl.searchParams.set("callbackUrl", pathname);
@@ -37,7 +38,7 @@ export default auth((req) => {
   }
 
   if (mustChangePassword || needsProfileCompletion) {
-    return NextResponse.redirect(new URL("/change-password", req.nextUrl.origin));
+    return NextResponse.redirect(new URL("/complete-profile", req.nextUrl.origin));
   }
 
   if (isPlatformOnlySuperAdmin && (isAdminRoute || isStaffRoute)) {
@@ -70,5 +71,5 @@ export default auth((req) => {
 });
 
 export const config = {
-  matcher: ["/admin/:path*", "/platform/:path*", "/staff/:path*", "/change-password"],
+  matcher: ["/admin/:path*", "/platform/:path*", "/staff/:path*", "/complete-profile", "/change-password"],
 };

@@ -2,22 +2,22 @@ import type { Metadata } from "next";
 import { Suspense } from "react";
 
 import { AuthCard } from "@/components/auth/auth-card";
-import { ChangePasswordForm } from "@/components/auth/change-password-form";
+import { CompleteProfileForm } from "@/components/auth/complete-profile-form";
 
 export const metadata: Metadata = {
-  title: "Change password",
+  title: "Complete your profile",
 };
 
-export default function ChangePasswordPage() {
+export default function CompleteProfilePage() {
   return (
     <AuthCard
-      title="Change password"
-      description="Enter your current password and choose a new one."
+      title="Complete your profile"
+      description="Enter your name and choose a new password. This applies to admins and staff on first sign-in."
     >
       <Suspense
         fallback={<p className="text-sm text-muted-foreground">Loading…</p>}
       >
-        <ChangePasswordForm />
+        <CompleteProfileForm />
       </Suspense>
     </AuthCard>
   );

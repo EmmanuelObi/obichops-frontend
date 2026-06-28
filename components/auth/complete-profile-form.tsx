@@ -18,11 +18,14 @@ import {
   FormLabel,
   FormMessage,
 } from "@/components/ui/form";
+import { Input } from "@/components/ui/input";
 import { PasswordInput } from "@/components/ui/password-input";
 
 const schema = z
   .object({
-    currentPassword: z.string().min(1, "Current password is required"),
+    firstName: z.string().trim().min(1, "First name is required"),
+    lastName: z.string().trim().min(1, "Last name is required"),
+    currentPassword: z.string().min(1, "Temporary password is required"),
     password: z.string().min(8, "Use at least 8 characters"),
     confirmPassword: z.string().min(8, "Confirm your password"),
   })
@@ -31,25 +34,27 @@ const schema = z
     path: ["confirmPassword"],
   });
 
-type ChangePasswordValues = z.input<typeof schema>;
+type CompleteProfileValues = z.input<typeof schema>;
 
-export function ChangePasswordForm() {
+export function CompleteProfileForm() {
   const router = useRouter();
   const { data: session } = useSession();
   const token = session?.accessToken;
   const [error, setError] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const form = useForm<ChangePasswordValues>({
+  const form = useForm<CompleteProfileValues>({
     resolver: zodResolver(schema),
     defaultValues: {
+      firstName: "",
+      lastName: "",
       currentPassword: "",
       password: "",
       confirmPassword: "",
     },
   });
 
-  async function onSubmit(values: ChangePasswordValues) {
+  async function onSubmit(values: CompleteProfileValues) {
     if (!token || !session?.user?.email) {
       setError("You must be signed in to continue.");
       return;
@@ -59,7 +64,15 @@ export function ChangePasswordForm() {
     setIsSubmitting(true);
 
     try {
-      await changePassword(token, values.currentPassword, values.password);
+      await changePassword(
+        token,
+        values.currentPassword,
+        values.password,
+        {
+          firstName: values.firstName,
+          lastName: values.lastName,
+        },
+      );
 
       const result = await signIn("credentials", {
         email: session.user.email,
@@ -83,7 +96,7 @@ export function ChangePasswordForm() {
       }
       router.refresh();
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Unable to change password");
+      setError(err instanceof Error ? err.message : "Unable to complete setup");
     } finally {
       setIsSubmitting(false);
     }
@@ -98,12 +111,42 @@ export function ChangePasswordForm() {
           </Alert>
         ) : null}
 
+        <div className="grid gap-4 sm:grid-cols-2">
+          <FormField
+            control={form.control}
+            name="firstName"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>First name</FormLabel>
+                <FormControl>
+                  <Input {...field} autoComplete="given-name" />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+
+          <FormField
+            control={form.control}
+            name="lastName"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Last name</FormLabel>
+                <FormControl>
+                  <Input {...field} autoComplete="family-name" />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+        </div>
+
         <FormField
           control={form.control}
           name="currentPassword"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>Current password</FormLabel>
+              <FormLabel>Temporary password</FormLabel>
               <FormControl>
                 <PasswordInput
                   {...field}
@@ -150,7 +193,7 @@ export function ChangePasswordForm() {
           className="h-11 w-full rounded-lg"
           disabled={isSubmitting}
         >
-          {isSubmitting ? "Saving…" : "Change password"}
+          {isSubmitting ? "Saving…" : "Complete setup"}
         </Button>
       </form>
     </Form>
