@@ -14,6 +14,9 @@ export interface OrderLineItem {
 export interface StaffOrder {
   id: string;
   menuWeekId: string;
+  userId?: string | null;
+  placedForName?: string | null;
+  placedByUserId?: string | null;
   status: OrderStatus;
   lineItems: OrderLineItem[];
   totalCents: number;
@@ -57,7 +60,10 @@ export interface StaffOrderHistoryResponse {
 
 export interface AdminWeekOrder {
   id: string;
-  userId: string;
+  userId: string | null;
+  placedForName: string | null;
+  isCustomRecipient: boolean;
+  placedByUserId: string | null;
   staffName: string;
   staffEmail: string;
   status: OrderStatus;

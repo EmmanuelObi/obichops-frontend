@@ -78,9 +78,9 @@ function ExcessPaymentActions({
     }
   }
 
-  const canUpload =
-    entry.order.excessPaymentStatus === "OUTSTANDING" ||
-    entry.order.excessPaymentStatus === "PROOF_UPLOADED";
+  const canUploadLegacy =
+    entry.order.excessPaymentStatus === "OUTSTANDING" &&
+    !entry.order.hasExcessPaymentProof;
   const canViewProof = entry.order.hasExcessPaymentProof;
 
   return (
@@ -96,7 +96,7 @@ function ExcessPaymentActions({
       >
         {excessPaymentStatusLabel(entry.order.excessPaymentStatus)}
       </Badge>
-      {canUpload ? (
+      {canUploadLegacy ? (
         <>
           <input
             ref={inputRef}
@@ -115,11 +115,7 @@ function ExcessPaymentActions({
             onClick={() => inputRef.current?.click()}
           >
             <Upload className="size-4" />
-            {uploading
-              ? "Uploading…"
-              : entry.order.excessPaymentStatus === "PROOF_UPLOADED"
-                ? "Replace proof"
-                : "Upload proof"}
+            {uploading ? "Uploading…" : "Upload proof"}
           </Button>
         </>
       ) : null}

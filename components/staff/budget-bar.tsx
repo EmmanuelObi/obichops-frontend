@@ -11,6 +11,8 @@ interface BudgetBarProps {
   budgetPoolCents: number;
   isPooled: boolean;
   maxOrderDaysPerStaff: number;
+  totalPacks?: number;
+  totalPackCents?: number;
 }
 
 export function BudgetBar({
@@ -22,6 +24,8 @@ export function BudgetBar({
   budgetPoolCents,
   isPooled,
   maxOrderDaysPerStaff,
+  totalPacks = 0,
+  totalPackCents = 0,
 }: BudgetBarProps) {
   const progress = Math.min(
     100,
@@ -54,6 +58,13 @@ export function BudgetBar({
         <span className="mx-1">·</span>
         {orderDayCount} of {maxOrderDaysPerStaff} order{" "}
         {maxOrderDaysPerStaff === 1 ? "day" : "days"} used
+        {totalPacks > 0 ? (
+          <>
+            <span className="mx-1">·</span>
+            Includes {totalPacks} {totalPacks === 1 ? "pack" : "packs"} (
+            {formatNaira(totalPackCents)})
+          </>
+        ) : null}
         {isOverBudget ? (
           <span className="text-warning-foreground">
             {" "}

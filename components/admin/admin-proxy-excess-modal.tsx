@@ -7,6 +7,8 @@ import { toast } from "sonner";
 import type { CurrentMenuWeekResponse } from "@/types/menu-week";
 import type { StaffOrder } from "@/types/order";
 import type { DayOfWeek } from "@/types/vendor";
+import type { ProxyOrderRecipient } from "@/types/proxy-order";
+import { toProxyOrderRecipientPayload } from "@/types/proxy-order";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import {
@@ -27,15 +29,16 @@ import { vendorHasPaymentDetails } from "@/lib/vendor-payment";
 
 type CartLine = { menuItemId: string; dayOfWeek: DayOfWeek; quantity: number };
 
-interface ExcessPaymentModalProps {
+interface AdminProxyExcessModalProps {
   open: boolean;
+  weekId: string;
+  recipient: ProxyOrderRecipient;
   excessCents: number;
   totalCents: number;
   budgetPoolCents: number;
   isPooled: boolean;
   orderDayCount: number;
   maxOrderAmountCents: number;
-  menuWeekId: string;
   cart: CartLine[];
   vendor: CurrentMenuWeekResponse["vendor"];
   token: string | undefined;
@@ -45,15 +48,16 @@ interface ExcessPaymentModalProps {
   submitting?: boolean;
 }
 
-export function ExcessPaymentModal({
+export function AdminProxyExcessModal({
   open,
+  weekId,
+  recipient,
   excessCents,
   totalCents,
   budgetPoolCents,
   isPooled,
   orderDayCount,
   maxOrderAmountCents,
-  menuWeekId,
   cart,
   vendor,
   token,
@@ -61,7 +65,7 @@ export function ExcessPaymentModal({
   onConfirm,
   onOrderUpdated,
   submitting,
-}: ExcessPaymentModalProps) {
+}: AdminProxyExcessModalProps) {
   const inputRef = useRef<HTMLInputElement>(null);
   const [preparing, setPreparing] = useState(false);
   const [uploading, setUploading] = useState(false);
@@ -77,8 +81,11 @@ export function ExcessPaymentModal({
     setPrepareError(null);
     try {
       const result = await apiClient(token).put<{ order: StaffOrder }>(
-        "/orders/me",
-        { menuWeekId, lineItems: cart },
+        `/admin/menu-weeks/${weekId}/proxy-order`,
+        {
+          recipient: toProxyOrderRecipientPayload(recipient),
+          lineItems: cart,
+        },
       );
       setOrderId(result.order.id);
       onOrderUpdated(result.order);
@@ -96,7 +103,7 @@ export function ExcessPaymentModal({
     } finally {
       setPreparing(false);
     }
-  }, [token, cart, menuWeekId, onOrderUpdated]);
+  }, [token, cart, weekId, recipient, onOrderUpdated]);
 
   useEffect(() => {
     if (open) {
@@ -109,8 +116,8 @@ export function ExcessPaymentModal({
   }, [open, prepareDraft]);
 
   const allowanceDescription = isPooled
-    ? `Your order total of ${formatNaira(totalCents)} exceeds your ${formatNaira(budgetPoolCents)} allowance (${orderDayCount} days × ${formatNaira(maxOrderAmountCents)} per day).`
-    : `Your order total of ${formatNaira(totalCents)} exceeds the ${formatNaira(maxOrderAmountCents)} daily allowance.`;
+    ? `This order total of ${formatNaira(totalCents)} exceeds the ${formatNaira(budgetPoolCents)} allowance (${orderDayCount} days × ${formatNaira(maxOrderAmountCents)} per day).`
+    : `This order total of ${formatNaira(totalCents)} exceeds the ${formatNaira(maxOrderAmountCents)} daily allowance.`;
 
   async function handleUpload(file: File) {
     if (!token || !orderId) return;
@@ -121,11 +128,11 @@ export function ExcessPaymentModal({
     }
     setUploading(true);
     try {
-      await uploadExcessPaymentProof(orderId, file, token);
+      await uploadExcessPaymentProof(orderId, file, token, { apiPrefix: "admin" });
       setProofFilename(file.name);
-      const orderData = await apiClient(token).get<{ order: StaffOrder | null }>(
-        `/orders/me?weekId=${menuWeekId}`,
-      );
+      const orderData = await apiClient(token).get<{
+        order: StaffOrder | null;
+      }>(`/admin/menu-weeks/${weekId}/proxy-order?orderId=${orderId}`);
       if (orderData.order) {
         onOrderUpdated(orderData.order);
       }
@@ -157,7 +164,11 @@ export function ExcessPaymentModal({
             <span className="font-medium text-foreground">
               {formatNaira(excessCents)}
             </span>{" "}
-            to the vendor below, then upload your payment proof.
+            to the vendor below, then upload payment proof for{" "}
+            <span className="font-medium text-foreground">
+              {recipient.displayName}
+            </span>
+            .
           </DialogDescription>
         </DialogHeader>
 
@@ -170,27 +181,26 @@ export function ExcessPaymentModal({
         {!hasVendorPaymentDetails ? (
           <Alert variant="destructive">
             <AlertDescription>
-              This vendor&apos;s payment details are not configured. Ask your
-              admin to add bank details before you can submit an order with
-              excess.
+              This vendor&apos;s payment details are not configured. Add bank
+              details before submitting an order with excess.
             </AlertDescription>
           </Alert>
         ) : (
           <div className="space-y-2 rounded-lg border bg-muted/30 p-4 text-sm">
-            <p className="font-medium">Pay to {vendor.name}</p>
+            <p className="font-medium">Pay to {vendor?.name}</p>
             <dl className="space-y-1">
               <div className="flex justify-between gap-4">
                 <dt className="text-muted-foreground">Account name</dt>
-                <dd className="text-right font-medium">{vendor.accountName}</dd>
+                <dd className="text-right font-medium">{vendor?.accountName}</dd>
               </div>
               <div className="flex justify-between gap-4">
                 <dt className="text-muted-foreground">Bank</dt>
-                <dd className="text-right font-medium">{vendor.bankName}</dd>
+                <dd className="text-right font-medium">{vendor?.bankName}</dd>
               </div>
               <div className="flex justify-between gap-4">
                 <dt className="text-muted-foreground">Account number</dt>
                 <dd className="font-mono text-right font-medium tracking-wide">
-                  {vendor.accountNumber}
+                  {vendor?.accountNumber}
                 </dd>
               </div>
             </dl>
@@ -252,6 +262,3 @@ export function ExcessPaymentModal({
     </Dialog>
   );
 }
-
-/** @deprecated Use ExcessPaymentModal */
-export const ExcessAcknowledgeModal = ExcessPaymentModal;

@@ -21,7 +21,14 @@ export interface MenuWeek {
 
 export interface CurrentMenuWeekResponse {
   menuWeek: MenuWeek | null;
-  vendor: { id: string; name: string; email: string } | null;
+  vendor: {
+    id: string;
+    name: string;
+    email: string;
+    accountName: string | null;
+    bankName: string | null;
+    accountNumber: string | null;
+  } | null;
   menu: Array<{
     id: string;
     vendorId: string;
@@ -29,6 +36,13 @@ export interface CurrentMenuWeekResponse {
     name: string;
     description: string;
     priceCents: number;
+    itemKind?: "FOOD" | "PACK";
+    packsRequired?: number;
     isAvailable: boolean;
+  }>;
+  packMenu: Array<{
+    id: string;
+    dayOfWeek: DayOfWeek;
+    priceCents: number;
   }>;
 }

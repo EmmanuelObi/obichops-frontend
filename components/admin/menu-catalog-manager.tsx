@@ -11,6 +11,7 @@ import {
   DAYS_OF_WEEK,
   type DayOfWeek,
   type MenuItem,
+  type MenuItemKind,
 } from "@/types/vendor";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
@@ -32,6 +33,13 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { apiClient } from "@/lib/api-client";
@@ -41,6 +49,8 @@ const addSchema = z.object({
   name: z.string().min(1, "Name is required"),
   description: z.string().optional(),
   priceNaira: z.string().min(1, "Price is required"),
+  itemKind: z.enum(["FOOD", "PACK"]),
+  packsRequired: z.number().int().min(0),
 });
 
 const editSchema = addSchema;
@@ -67,13 +77,28 @@ export function MenuCatalogManager({
 
   const addForm = useForm<AddValues>({
     resolver: zodResolver(addSchema),
-    defaultValues: { name: "", description: "", priceNaira: "" },
+    defaultValues: {
+      name: "",
+      description: "",
+      priceNaira: "",
+      itemKind: "FOOD",
+      packsRequired: 0,
+    },
   });
 
   const editForm = useForm<AddValues>({
     resolver: zodResolver(editSchema),
-    defaultValues: { name: "", description: "", priceNaira: "" },
+    defaultValues: {
+      name: "",
+      description: "",
+      priceNaira: "",
+      itemKind: "FOOD",
+      packsRequired: 0,
+    },
   });
+
+  const addItemKind = addForm.watch("itemKind");
+  const editItemKind = editForm.watch("itemKind");
 
   const load = useCallback(async () => {
     if (!token) return;
@@ -122,8 +147,16 @@ export function MenuCatalogManager({
         name: values.name.trim(),
         description: values.description?.trim() ?? "",
         priceCents,
+        itemKind: values.itemKind,
+        packsRequired: values.itemKind === "FOOD" ? values.packsRequired : 0,
       });
-      addForm.reset({ name: "", description: "", priceNaira: "" });
+      addForm.reset({
+        name: "",
+        description: "",
+        priceNaira: "",
+        itemKind: "FOOD",
+        packsRequired: 0,
+      });
       await load();
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to add menu item");
@@ -136,6 +169,8 @@ export function MenuCatalogManager({
       name: item.name,
       description: item.description,
       priceNaira: String(item.priceCents / 100),
+      itemKind: item.itemKind ?? "FOOD",
+      packsRequired: item.packsRequired ?? 0,
     });
   }
 
@@ -153,6 +188,8 @@ export function MenuCatalogManager({
         name: values.name.trim(),
         description: values.description?.trim() ?? "",
         priceCents,
+        itemKind: values.itemKind,
+        packsRequired: values.itemKind === "FOOD" ? values.packsRequired : 0,
       });
       setEditingItem(null);
       await load();
@@ -251,7 +288,58 @@ export function MenuCatalogManager({
                     </FormItem>
                   )}
                 />
-                <div className="flex items-end">
+                <FormField
+                  control={addForm.control}
+                  name="itemKind"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Item type</FormLabel>
+                      <Select
+                        value={field.value}
+                        onValueChange={(value) =>
+                          field.onChange(value as MenuItemKind)
+                        }
+                      >
+                        <FormControl>
+                          <SelectTrigger className="w-full">
+                            <SelectValue />
+                          </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                          <SelectItem value="FOOD">Food item</SelectItem>
+                          <SelectItem value="PACK">Pack (price only)</SelectItem>
+                        </SelectContent>
+                      </Select>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                {addItemKind === "FOOD" ? (
+                  <FormField
+                    control={addForm.control}
+                    name="packsRequired"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Extra packs required</FormLabel>
+                        <FormControl>
+                          <Input
+                            type="number"
+                            min={0}
+                            value={field.value}
+                            onChange={(event) =>
+                              field.onChange(event.target.valueAsNumber || 0)
+                            }
+                            onBlur={field.onBlur}
+                            name={field.name}
+                            ref={field.ref}
+                          />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                ) : null}
+                <div className="flex items-end md:col-span-2">
                   <Button
                     type="submit"
                     variant="premium"
@@ -290,6 +378,14 @@ export function MenuCatalogManager({
                         <Badge variant={item.isAvailable ? "default" : "secondary"}>
                           {item.isAvailable ? "Enabled" : "Disabled"}
                         </Badge>
+                        {item.itemKind === "PACK" ? (
+                          <Badge variant="outline">Pack price · hidden from staff</Badge>
+                        ) : item.packsRequired > 0 ? (
+                          <Badge variant="outline">
+                            +{item.packsRequired} extra{" "}
+                            {item.packsRequired === 1 ? "pack" : "packs"}
+                          </Badge>
+                        ) : null}
                       </div>
                       {item.description ? (
                         <p className="text-sm text-muted-foreground">
@@ -377,6 +473,61 @@ export function MenuCatalogManager({
                   </FormItem>
                 )}
               />
+              <FormField
+                control={editForm.control}
+                name="itemKind"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Item type</FormLabel>
+                    <Select
+                      value={field.value}
+                      onValueChange={(value) =>
+                        field.onChange(value as MenuItemKind)
+                      }
+                    >
+                      <FormControl>
+                        <SelectTrigger className="w-full">
+                          <SelectValue />
+                        </SelectTrigger>
+                      </FormControl>
+                      <SelectContent>
+                        <SelectItem value="FOOD">Food item</SelectItem>
+                        <SelectItem value="PACK">Pack (price only)</SelectItem>
+                      </SelectContent>
+                    </Select>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              {editItemKind === "FOOD" ? (
+                <FormField
+                  control={editForm.control}
+                  name="packsRequired"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Extra packs required</FormLabel>
+                      <FormControl>
+                        <Input
+                          type="number"
+                          min={0}
+                          value={field.value}
+                          onChange={(event) =>
+                            field.onChange(event.target.valueAsNumber || 0)
+                          }
+                          onBlur={field.onBlur}
+                          name={field.name}
+                          ref={field.ref}
+                        />
+                      </FormControl>
+                      <p className="text-xs text-muted-foreground">
+                        Each order day already includes 1 pack. Set this for items
+                        that need their own extra container.
+                      </p>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              ) : null}
               <DialogFooter>
                 <Button type="submit" variant="premium" size="lg" className="h-11 rounded-lg">
                   Save changes

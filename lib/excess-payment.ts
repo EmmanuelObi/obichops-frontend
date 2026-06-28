@@ -24,27 +24,30 @@ export async function uploadExcessPaymentProof(
   orderId: string,
   file: File,
   token: string,
+  options?: { apiPrefix?: "staff" | "admin" },
 ): Promise<void> {
   const validationError = validateExcessPaymentFile(file);
   if (validationError) {
     throw new Error(validationError);
   }
 
-  const presignResponse = await fetch(
-    `${API_BASE_URL}/orders/me/${orderId}/excess-payment-proof/upload-url`,
-    {
-      method: "POST",
-      headers: {
-        Authorization: `Bearer ${token}`,
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        filename: file.name,
-        mimeType: file.type,
-        sizeBytes: file.size,
-      }),
+  const basePath =
+    options?.apiPrefix === "admin"
+      ? `/admin/orders/${orderId}/excess-payment-proof`
+      : `/orders/me/${orderId}/excess-payment-proof`;
+
+  const presignResponse = await fetch(`${API_BASE_URL}${basePath}/upload-url`, {
+    method: "POST",
+    headers: {
+      Authorization: `Bearer ${token}`,
+      "Content-Type": "application/json",
     },
-  );
+    body: JSON.stringify({
+      filename: file.name,
+      mimeType: file.type,
+      sizeBytes: file.size,
+    }),
+  });
 
   const presignPayload = await presignResponse.json().catch(() => null);
   if (!presignResponse.ok) {
@@ -72,22 +75,19 @@ export async function uploadExcessPaymentProof(
     throw new Error("Upload to storage failed");
   }
 
-  const confirmResponse = await fetch(
-    `${API_BASE_URL}/orders/me/${orderId}/excess-payment-proof/confirm`,
-    {
-      method: "POST",
-      headers: {
-        Authorization: `Bearer ${token}`,
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        storageKey,
-        filename: file.name,
-        mimeType: file.type,
-        sizeBytes: file.size,
-      }),
+  const confirmResponse = await fetch(`${API_BASE_URL}${basePath}/confirm`, {
+    method: "POST",
+    headers: {
+      Authorization: `Bearer ${token}`,
+      "Content-Type": "application/json",
     },
-  );
+    body: JSON.stringify({
+      storageKey,
+      filename: file.name,
+      mimeType: file.type,
+      sizeBytes: file.size,
+    }),
+  });
 
   const confirmPayload = await confirmResponse.json().catch(() => null);
   if (!confirmResponse.ok) {

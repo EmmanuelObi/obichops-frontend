@@ -32,9 +32,20 @@ export interface Vendor {
   workspaceId: string;
   name: string;
   email: string;
+  accountName: string | null;
+  bankName: string | null;
+  accountNumber: string | null;
   isActive: boolean;
   createdAt?: string;
 }
+
+export interface VendorPaymentDetails {
+  accountName: string;
+  bankName: string;
+  accountNumber: string;
+}
+
+export type MenuItemKind = "FOOD" | "PACK";
 
 export interface MenuItem {
   id: string;
@@ -44,6 +55,8 @@ export interface MenuItem {
   name: string;
   description: string;
   priceCents: number;
+  itemKind: MenuItemKind;
+  packsRequired: number;
   isAvailable: boolean;
   updatedAt?: string;
 }

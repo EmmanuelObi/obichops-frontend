@@ -1,30 +1,35 @@
 "use client";
 
+import Link from "next/link";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { useSession } from "next-auth/react";
-import { CalendarOff, CheckCircle2, Lock, Minus, Pencil, Plus } from "lucide-react";
+import { CalendarOff, CheckCircle2, Minus, Pencil, Plus } from "lucide-react";
 import { toast } from "sonner";
 
-import type { CurrentMenuWeekResponse } from "@/types/menu-week";
-import type { StaffOrder } from "@/types/order";
-import type { DayOfWeek } from "@/types/vendor";
-import { DAY_LABELS } from "@/types/vendor";
+import { AdminProxyExcessModal } from "@/components/admin/admin-proxy-excess-modal";
+import { BudgetBar } from "@/components/staff/budget-bar";
+import { DayTabs } from "@/components/staff/day-tabs";
+import { OrderingWindowBanner } from "@/components/staff/ordering-window-banner";
 import { EmptyState } from "@/components/layout/empty-state";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
-import { BudgetBar } from "@/components/staff/budget-bar";
-import { DayTabs } from "@/components/staff/day-tabs";
-import { ExcessPaymentModal } from "@/components/staff/excess-acknowledge-modal";
-import { OrderingWindowBanner } from "@/components/staff/ordering-window-banner";
 import { apiClient } from "@/lib/api-client";
 import { formatNaira } from "@/lib/format";
 import { orderDayLimitMessage } from "@/lib/order-day-limit";
-import { computePackSummary, filterFoodCartLines } from "@/lib/pack-lines";
 import { calculateOrderTotals } from "@/lib/order-totals";
+import { computePackSummary, filterFoodCartLines } from "@/lib/pack-lines";
 import { cn } from "@/lib/utils";
+import type { CurrentMenuWeekResponse } from "@/types/menu-week";
+import type { StaffOrder } from "@/types/order";
+import type {
+  ProxyOrderRecipient,
+} from "@/types/proxy-order";
+import { toProxyOrderRecipientPayload } from "@/types/proxy-order";
+import type { DayOfWeek } from "@/types/vendor";
+import { DAY_LABELS } from "@/types/vendor";
 import {
   Tooltip,
   TooltipContent,
@@ -47,26 +52,15 @@ function lineItemsToCart(
   );
 }
 
-function OrderingSkeleton() {
-  return (
-    <div className="space-y-6">
-      <Skeleton className="h-20 w-full rounded-xl" />
-      <Skeleton className="h-24 w-full rounded-xl" />
-      <div className="flex gap-2">
-        {Array.from({ length: 5 }).map((_, i) => (
-          <Skeleton key={i} className="h-10 flex-1 rounded-lg" />
-        ))}
-      </div>
-      <div className="space-y-3">
-        {Array.from({ length: 3 }).map((_, i) => (
-          <Skeleton key={i} className="h-28 w-full rounded-xl" />
-        ))}
-      </div>
-    </div>
-  );
+interface AdminProxyOrderingPageProps {
+  weekId: string;
+  recipient: ProxyOrderRecipient;
 }
 
-export function StaffOrderingPage() {
+export function AdminProxyOrderingPage({
+  weekId,
+  recipient,
+}: AdminProxyOrderingPageProps) {
   const { data: session } = useSession();
   const token = session?.accessToken;
 
@@ -87,29 +81,41 @@ export function StaffOrderingPage() {
     setLoading(true);
     setError(null);
     try {
-      const weekData = await apiClient(token).get<CurrentMenuWeekResponse>(
-        "/menu-weeks/current",
-      );
-      setData(weekData);
+      const [context, orderQuery] = await Promise.all([
+        apiClient(token).get<CurrentMenuWeekResponse>(
+          `/admin/menu-weeks/${weekId}/ordering-context`,
+        ),
+        recipient.recipientType === "STAFF"
+          ? apiClient(token).get<{
+              order: StaffOrder | null;
+              recipient: ProxyOrderRecipient;
+            }>(
+              `/admin/menu-weeks/${weekId}/proxy-order?userId=${recipient.userId}`,
+            )
+          : apiClient(token).get<{
+              order: StaffOrder | null;
+              recipient: ProxyOrderRecipient;
+            }>(
+              `/admin/menu-weeks/${weekId}/proxy-order?placedForName=${encodeURIComponent(recipient.placedForName)}`,
+            ),
+      ]);
 
-      if (weekData.menuWeek) {
-        const orderData = await apiClient(token).get<{ order: StaffOrder | null }>(
-          `/orders/me?weekId=${weekData.menuWeek.id}`,
-        );
-        setOrder(orderData.order);
-        setIsEditing(false);
-        const packIds = new Set((weekData.packMenu ?? []).map((p) => p.id));
-        setCart(lineItemsToCart(orderData.order?.lineItems ?? [], packIds));
-        if (weekData.menuWeek.orderableDays[0]) {
-          setActiveDay(weekData.menuWeek.orderableDays[0]);
-        }
+      setData(context);
+      setOrder(orderQuery.order);
+      setIsEditing(false);
+
+      const packIds = new Set((context.packMenu ?? []).map((p) => p.id));
+      setCart(lineItemsToCart(orderQuery.order?.lineItems ?? [], packIds));
+
+      if (context.menuWeek?.orderableDays[0]) {
+        setActiveDay(context.menuWeek.orderableDays[0]);
       }
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to load ordering data");
     } finally {
       setLoading(false);
     }
-  }, [token]);
+  }, [token, weekId, recipient]);
 
   useEffect(() => {
     void load();
@@ -166,7 +172,6 @@ export function StaffOrderingPage() {
         isPooled: false,
         totalPacks: 0,
         totalPackCents: 0,
-        dayBreakdown: {} as Record<string, { totalCents: number }>,
       };
     }
 
@@ -195,7 +200,6 @@ export function StaffOrderingPage() {
         isPooled: orderDayCount > 1,
         totalPacks,
         totalPackCents,
-        dayBreakdown: {} as Record<string, { totalCents: number }>,
       };
     }
 
@@ -242,7 +246,6 @@ export function StaffOrderingPage() {
     };
   }, [
     activeFoodLines,
-    cart,
     data?.menu,
     data?.packMenu,
     daysWithItems.length,
@@ -254,7 +257,6 @@ export function StaffOrderingPage() {
   ]);
 
   const maxOrderDays = menuWeek?.maxOrderDaysPerStaff ?? 2;
-
   const atOrderDayLimit = Boolean(
     menuWeek && daysWithItems.length >= maxOrderDays,
   );
@@ -277,7 +279,6 @@ export function StaffOrderingPage() {
 
   function getQuantity(menuItemId: string) {
     if (packItemIds.has(menuItemId)) return 0;
-
     if (isSubmitted && !isEditing && order) {
       return (
         order.lineItems.find(
@@ -311,11 +312,7 @@ export function StaffOrderingPage() {
     if (!canEdit || !menuWeek) return;
 
     const isNewDay = !daysWithItems.includes(activeDay);
-    if (
-      quantity > 0 &&
-      isNewDay &&
-      daysWithItems.length >= maxOrderDays
-    ) {
+    if (quantity > 0 && isNewDay && daysWithItems.length >= maxOrderDays) {
       toast.error(orderDayLimitMessage(maxOrderDays, "add"));
       return;
     }
@@ -335,10 +332,13 @@ export function StaffOrderingPage() {
     setSaving(true);
     setError(null);
     try {
-      const result = await apiClient(token).put<{ order: StaffOrder }>("/orders/me", {
-        menuWeekId: menuWeek.id,
-        lineItems: cart,
-      });
+      const result = await apiClient(token).put<{ order: StaffOrder }>(
+        `/admin/menu-weeks/${weekId}/proxy-order`,
+        {
+          recipient: toProxyOrderRecipientPayload(recipient),
+          lineItems: cart,
+        },
+      );
       setOrder(result.order);
       setIsEditing(false);
       toast.success("Draft saved");
@@ -353,22 +353,26 @@ export function StaffOrderingPage() {
 
   async function submitOrder() {
     if (!token || !menuWeek || !canEdit) return;
-    const isResubmit = isSubmitted && isEditing;
     setSubmitting(true);
     setError(null);
     try {
-      await apiClient(token).put("/orders/me", {
-        menuWeekId: menuWeek.id,
-        lineItems: cart,
-      });
+      const saved = await apiClient(token).put<{ order: StaffOrder }>(
+        `/admin/menu-weeks/${weekId}/proxy-order`,
+        {
+          recipient: toProxyOrderRecipientPayload(recipient),
+          lineItems: cart,
+        },
+      );
       const result = await apiClient(token).post<{ order: StaffOrder }>(
-        "/orders/me/submit",
-        { menuWeekId: menuWeek.id },
+        `/admin/menu-weeks/${weekId}/proxy-order/submit`,
+        { orderId: saved.order.id },
       );
       setOrder(result.order);
       setExcessModalOpen(false);
       setIsEditing(false);
-      toast.success(isResubmit ? "Order updated!" : "Order submitted!");
+      toast.success(
+        isSubmitted && isEditing ? "Order updated!" : "Order submitted!",
+      );
     } catch (err) {
       const message = err instanceof Error ? err.message : "Failed to submit order";
       if (message.includes("Payment proof required")) {
@@ -394,15 +398,20 @@ export function StaffOrderingPage() {
     atOrderDayLimit && !daysWithItems.includes(activeDay);
 
   if (loading) {
-    return <OrderingSkeleton />;
+    return (
+      <div className="space-y-6">
+        <Skeleton className="h-20 w-full rounded-xl" />
+        <Skeleton className="h-24 w-full rounded-xl" />
+      </div>
+    );
   }
 
   if (!menuWeek) {
     return (
       <EmptyState
         icon={CalendarOff}
-        title="No menu week yet"
-        description="Your admin hasn't published this week's menu. Check back on Friday when ordering usually opens."
+        title="Menu week not found"
+        description="This menu week could not be loaded."
       />
     );
   }
@@ -415,11 +424,31 @@ export function StaffOrderingPage() {
         </Alert>
       ) : null}
 
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <div>
+          <p className="text-sm text-muted-foreground">Placing order for</p>
+          <p className="text-lg font-semibold">{recipient.displayName}</p>
+          {recipient.recipientType === "CUSTOM" ? (
+            <Badge variant="outline" className="mt-1">
+              Custom recipient
+            </Badge>
+          ) : null}
+        </div>
+        <Button
+          variant="outline"
+          size="sm"
+          nativeButton={false}
+          render={<Link href={`/admin/weeks/${weekId}/orders`} />}
+        >
+          Back to orders
+        </Button>
+      </div>
+
       <OrderingWindowBanner menuWeek={menuWeek} />
 
       {data?.vendor ? (
         <p className="text-sm text-muted-foreground">
-          This week&apos;s vendor:{" "}
+          Vendor:{" "}
           <span className="font-medium text-foreground">{data.vendor.name}</span>
         </p>
       ) : null}
@@ -427,10 +456,9 @@ export function StaffOrderingPage() {
       {isSubmitted && isEditing ? (
         <Alert variant="warning">
           <Pencil />
-          <AlertTitle>Editing your order</AlertTitle>
+          <AlertTitle>Editing order</AlertTitle>
           <AlertDescription>
-            Save or update when you&apos;re done. Cancel to keep your submitted
-            order unchanged.
+            Save or update when done. Cancel to keep the submitted order unchanged.
           </AlertDescription>
         </Alert>
       ) : isSubmitted ? (
@@ -438,15 +466,14 @@ export function StaffOrderingPage() {
           <CheckCircle2 />
           <AlertDescription className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
             <span>
-              Your order was submitted
+              Order submitted
               {order?.submittedAt
                 ? ` on ${new Date(order.submittedAt).toLocaleString()}`
                 : ""}
               . Total {formatNaira(order?.totalCents ?? 0)}.
               {(order?.excessCents ?? 0) > 0 ? (
                 <span className="mt-1 block text-sm">
-                  Orders with excess payment can&apos;t be changed after
-                  submission.
+                  Orders with excess payment can&apos;t be changed after submission.
                 </span>
               ) : null}
             </span>
@@ -515,12 +542,6 @@ export function StaffOrderingPage() {
                     <div className="flex flex-wrap items-center gap-2">
                       <p className="font-medium">{item.name}</p>
                       <Badge variant="secondary">{formatNaira(item.priceCents)}</Badge>
-                      {isSubmitted && !isEditing && qty > 0 ? (
-                        <Badge variant="outline" className="gap-1">
-                          <CheckCircle2 className="size-3" />
-                          {qty} ordered
-                        </Badge>
-                      ) : null}
                     </div>
                     {item.description ? (
                       <p className="text-sm text-muted-foreground">
@@ -576,12 +597,6 @@ export function StaffOrderingPage() {
                         </>
                       )}
                     </div>
-                  ) : !isSubmitted ? (
-                    <Button size="sm" variant="outline" disabled>
-                      Add
-                    </Button>
-                  ) : isSubmitted && !isEditing && qty > 0 ? (
-                    <Lock className="size-4 text-muted-foreground" />
                   ) : null}
                 </CardContent>
               </Card>
@@ -597,7 +612,7 @@ export function StaffOrderingPage() {
             onClick={() => setCartOpen((open) => !open)}
           >
             <CardTitle className="flex items-center justify-between text-base">
-              <span>Your week ({cartSummary.length} items)</span>
+              <span>Order summary ({cartSummary.length} items)</span>
               <span className="text-sm font-normal text-muted-foreground">
                 {cartOpen ? "Hide" : "Show"}
               </span>
@@ -634,7 +649,11 @@ export function StaffOrderingPage() {
             </div>
             <div className="flex flex-wrap gap-2">
               {isSubmitted && isEditing ? (
-                <Button variant="outline" onClick={cancelEditing} disabled={submitting || saving}>
+                <Button
+                  variant="outline"
+                  onClick={cancelEditing}
+                  disabled={submitting || saving}
+                >
                   Cancel editing
                 </Button>
               ) : null}
@@ -665,15 +684,16 @@ export function StaffOrderingPage() {
         </div>
       ) : null}
 
-      <ExcessPaymentModal
+      <AdminProxyExcessModal
         open={excessModalOpen}
+        weekId={weekId}
+        recipient={recipient}
         excessCents={pricedCart.excessCents}
         totalCents={pricedCart.totalCents}
         budgetPoolCents={pricedCart.budgetPoolCents}
         isPooled={pricedCart.isPooled}
         orderDayCount={pricedCart.orderDayCount}
         maxOrderAmountCents={menuWeek.maxOrderAmountCents}
-        menuWeekId={menuWeek.id}
         cart={cart}
         vendor={data?.vendor ?? null}
         token={token}

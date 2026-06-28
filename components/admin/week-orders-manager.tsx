@@ -1,8 +1,9 @@
 "use client";
 
+import Link from "next/link";
 import { useCallback, useEffect, useState } from "react";
 import { useSession } from "next-auth/react";
-import { ClipboardList } from "lucide-react";
+import { ClipboardList, UserPlus } from "lucide-react";
 import { toast } from "sonner";
 
 import type { AdminWeekOrder } from "@/types/order";
@@ -140,6 +141,13 @@ export function WeekOrdersManager({ weekId }: WeekOrdersManagerProps) {
       </div>
 
       <div className="flex flex-wrap gap-2">
+        <Button
+          nativeButton={false}
+          render={<Link href={`/admin/weeks/${weekId}/place-order`} />}
+        >
+          <UserPlus className="size-4" />
+          Place order
+        </Button>
         <Button variant="outline" size="sm" onClick={() => void handleDownload("csv")}>
           Download CSV
         </Button>
@@ -181,12 +189,13 @@ export function WeekOrdersManager({ weekId }: WeekOrdersManagerProps) {
               <TableHead>Excess</TableHead>
               <TableHead>Acknowledged</TableHead>
               <TableHead>Payment proof</TableHead>
+              <TableHead className="w-[100px]">Actions</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
             {loading ? (
               <TableRow>
-                <TableCell colSpan={7} className="text-muted-foreground">
+                <TableCell colSpan={8} className="text-muted-foreground">
                   Loading…
                 </TableCell>
               </TableRow>
@@ -203,7 +212,9 @@ export function WeekOrdersManager({ weekId }: WeekOrdersManagerProps) {
                     <div>
                       <p className="font-medium">{order.staffName}</p>
                       <p className="text-xs text-muted-foreground">
-                        {order.staffEmail}
+                        {order.isCustomRecipient
+                          ? "Custom recipient"
+                          : order.staffEmail}
                       </p>
                     </div>
                   </TableCell>
@@ -264,6 +275,26 @@ export function WeekOrdersManager({ weekId }: WeekOrdersManagerProps) {
                           </Button>
                         ) : null}
                       </div>
+                    ) : (
+                      "—"
+                    )}
+                  </TableCell>
+                  <TableCell>
+                    {order.status === "DRAFT" ||
+                    (order.status === "SUBMITTED" && order.excessCents === 0) ? (
+                      <Button
+                        variant="link"
+                        size="sm"
+                        className="h-auto p-0"
+                        nativeButton={false}
+                        render={
+                          <Link
+                            href={`/admin/weeks/${weekId}/place-order/order?orderId=${order.id}`}
+                          />
+                        }
+                      >
+                        {order.status === "DRAFT" ? "Continue" : "Edit"}
+                      </Button>
                     ) : (
                       "—"
                     )}
