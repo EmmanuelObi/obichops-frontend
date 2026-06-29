@@ -89,9 +89,9 @@ export async function resetPassword(token: string, password: string) {
 
 export async function changePassword(
   token: string,
-  currentPassword: string,
   newPassword: string,
   profile?: { firstName: string; lastName: string },
+  currentPassword?: string,
 ) {
   const response = await fetch(`${API_BASE_URL}/auth/change-password`, {
     method: "POST",
@@ -100,7 +100,7 @@ export async function changePassword(
       Authorization: `Bearer ${token}`,
     },
     body: JSON.stringify({
-      currentPassword,
+      ...(currentPassword ? { currentPassword } : {}),
       newPassword,
       ...(profile
         ? { firstName: profile.firstName.trim(), lastName: profile.lastName.trim() }
