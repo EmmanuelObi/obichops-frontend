@@ -20,6 +20,8 @@ export interface AuthResponse {
   user: AuthUser;
 }
 
+export type TeamMemberStatus = "active" | "pending" | "inactive";
+
 export interface AllowedEmail {
   id: string;
   email: string;
@@ -27,6 +29,10 @@ export interface AllowedEmail {
   workspaceId: string;
   isActive: boolean;
   createdAt?: string;
+  firstName?: string | null;
+  lastName?: string | null;
+  displayName?: string | null;
+  status: TeamMemberStatus;
 }
 
 export interface Workspace {

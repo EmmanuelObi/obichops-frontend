@@ -75,6 +75,19 @@ export function roleLabel(role: string): string {
   }
 }
 
+export function teamMemberStatusLabel(status: string): string {
+  switch (status) {
+    case "active":
+      return "Active";
+    case "pending":
+      return "Pending invite";
+    case "inactive":
+      return "Inactive";
+    default:
+      return status;
+  }
+}
+
 export function orderStatusLabel(status: string): string {
   switch (status) {
     case "DRAFT":
