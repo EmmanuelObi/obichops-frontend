@@ -35,6 +35,13 @@ export interface StaffOrderHistoryLineItem extends OrderLineItem {
   name: string;
 }
 
+export interface StaffOrderHistoryReview {
+  rating: number;
+  comment: string | null;
+  createdAt: string;
+  updatedAt: string;
+}
+
 export interface StaffOrderHistoryEntry {
   order: StaffOrder & {
     excessPaymentStatus: ExcessPaymentStatus;
@@ -50,6 +57,8 @@ export interface StaffOrderHistoryEntry {
     name: string;
   } | null;
   lineItems: StaffOrderHistoryLineItem[];
+  canReview: boolean;
+  review: StaffOrderHistoryReview | null;
 }
 
 export interface StaffOrderHistoryResponse {

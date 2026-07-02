@@ -37,6 +37,17 @@ export interface Vendor {
   accountNumber: string | null;
   isActive: boolean;
   createdAt?: string;
+  averageRating?: number | null;
+  reviewCount?: number;
+}
+
+export interface VendorReview {
+  id: string;
+  rating: number;
+  comment: string | null;
+  staffName: string;
+  weekStart: string | null;
+  createdAt: string;
 }
 
 export interface VendorPaymentDetails {

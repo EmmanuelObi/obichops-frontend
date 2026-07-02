@@ -2,14 +2,15 @@
 
 import Link from "next/link";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { useSession } from "next-auth/react";
-import { Pencil, Store } from "lucide-react";
+import { DateTime } from "luxon";
+import { MessageSquare, Pencil, Star, Store } from "lucide-react";
 import { toast } from "sonner";
 
-import type { Vendor } from "@/types/vendor";
+import type { Vendor, VendorReview } from "@/types/vendor";
 import { EmptyState } from "@/components/layout/empty-state";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
@@ -40,6 +41,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { apiClient } from "@/lib/api-client";
+import { formatVendorRating } from "@/lib/labels";
 
 const bankFieldsSchema = {
   accountName: z.string().min(1, "Account name is required"),
@@ -76,6 +78,18 @@ export function VendorsManager() {
   const [loading, setLoading] = useState(true);
   const [editingVendor, setEditingVendor] = useState<Vendor | null>(null);
   const [savingEdit, setSavingEdit] = useState(false);
+  const [reviewsVendor, setReviewsVendor] = useState<Vendor | null>(null);
+  const [reviews, setReviews] = useState<VendorReview[]>([]);
+  const [reviewsLoading, setReviewsLoading] = useState(false);
+
+  const sortedVendors = useMemo(() => {
+    return [...vendors].sort((a, b) => {
+      const aRating = a.averageRating ?? -1;
+      const bRating = b.averageRating ?? -1;
+      if (bRating !== aRating) return bRating - aRating;
+      return a.name.localeCompare(b.name);
+    });
+  }, [vendors]);
 
   const form = useForm<CreateValues>({
     resolver: zodResolver(createSchema),
@@ -118,6 +132,27 @@ export function VendorsManager() {
   useEffect(() => {
     void load();
   }, [load]);
+
+  const openReviews = useCallback(
+    async (vendor: Vendor) => {
+      if (!token) return;
+      setReviewsVendor(vendor);
+      setReviewsLoading(true);
+      setReviews([]);
+      try {
+        const data = await apiClient(token).get<{ reviews: VendorReview[] }>(
+          `/admin/vendors/${vendor.id}/reviews`,
+        );
+        setReviews(data.reviews);
+      } catch (err) {
+        toast.error(err instanceof Error ? err.message : "Failed to load reviews");
+        setReviewsVendor(null);
+      } finally {
+        setReviewsLoading(false);
+      }
+    },
+    [token],
+  );
 
   useEffect(() => {
     if (!editingVendor) return;
@@ -302,6 +337,7 @@ export function VendorsManager() {
               <TableRow>
                 <TableHead>Name</TableHead>
                 <TableHead>Email</TableHead>
+                <TableHead>Rating</TableHead>
                 <TableHead>Bank</TableHead>
                 <TableHead>Account</TableHead>
                 <TableHead>Status</TableHead>
@@ -309,10 +345,24 @@ export function VendorsManager() {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {vendors.map((vendor) => (
+              {sortedVendors.map((vendor) => (
                 <TableRow key={vendor.id}>
                   <TableCell className="font-medium">{vendor.name}</TableCell>
                   <TableCell>{vendor.email}</TableCell>
+                  <TableCell>
+                    {vendor.reviewCount ? (
+                      <button
+                        type="button"
+                        className="inline-flex items-center gap-1 text-sm hover:text-primary"
+                        onClick={() => void openReviews(vendor)}
+                      >
+                        <Star className="size-3.5 fill-gold text-gold" />
+                        {formatVendorRating(vendor.averageRating, vendor.reviewCount)}
+                      </button>
+                    ) : (
+                      <span className="text-sm text-muted-foreground">—</span>
+                    )}
+                  </TableCell>
                   <TableCell>{vendor.bankName ?? "—"}</TableCell>
                   <TableCell className="font-mono text-sm">
                     {maskAccountNumber(vendor.accountNumber)}
@@ -324,6 +374,16 @@ export function VendorsManager() {
                   </TableCell>
                   <TableCell className="text-right">
                     <div className="flex justify-end gap-2">
+                      {(vendor.reviewCount ?? 0) > 0 ? (
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => void openReviews(vendor)}
+                        >
+                          <MessageSquare className="size-4" />
+                          Reviews
+                        </Button>
+                      ) : null}
                       <Button
                         variant="outline"
                         size="sm"
@@ -457,6 +517,68 @@ export function VendorsManager() {
               </DialogFooter>
             </form>
           </Form>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog
+        open={Boolean(reviewsVendor)}
+        onOpenChange={(open) => !open && setReviewsVendor(null)}
+      >
+        <DialogContent className="max-w-2xl">
+          <DialogHeader>
+            <DialogTitle>
+              Reviews for {reviewsVendor?.name}
+            </DialogTitle>
+          </DialogHeader>
+          {reviewsLoading ? (
+            <div className="space-y-2 py-4">
+              {Array.from({ length: 3 }).map((_, index) => (
+                <Skeleton key={index} className="h-16 w-full rounded-lg" />
+              ))}
+            </div>
+          ) : reviews.length === 0 ? (
+            <p className="py-6 text-center text-sm text-muted-foreground">
+              No staff reviews yet for this vendor.
+            </p>
+          ) : (
+            <div className="max-h-[60vh] space-y-3 overflow-y-auto pr-1">
+              {reviews.map((review) => (
+                <div
+                  key={review.id}
+                  className="rounded-lg border bg-muted/20 p-4"
+                >
+                  <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
+                    <div>
+                      <p className="font-medium">{review.staffName}</p>
+                      <p className="text-xs text-muted-foreground">
+                        {review.weekStart
+                          ? `Week of ${DateTime.fromISO(review.weekStart).toFormat("d LLL yyyy")}`
+                          : "Unknown week"}
+                        {" · "}
+                        {DateTime.fromISO(review.createdAt).toFormat(
+                          "d LLL yyyy",
+                        )}
+                      </p>
+                    </div>
+                    <div className="flex items-center gap-1 text-gold">
+                      {Array.from({ length: 5 }).map((_, index) => (
+                        <Star
+                          key={index}
+                          className="size-4"
+                          fill={index < review.rating ? "currentColor" : "none"}
+                        />
+                      ))}
+                    </div>
+                  </div>
+                  {review.comment ? (
+                    <p className="mt-2 text-sm text-muted-foreground">
+                      {review.comment}
+                    </p>
+                  ) : null}
+                </div>
+              ))}
+            </div>
+          )}
         </DialogContent>
       </Dialog>
     </div>

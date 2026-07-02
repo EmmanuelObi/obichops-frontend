@@ -21,6 +21,7 @@ import { formatNaira } from "@/lib/format";
 import { excessPaymentStatusLabel } from "@/lib/labels";
 import { DAY_LABELS, type DayOfWeek } from "@/types/vendor";
 import type { StaffOrderHistoryResponse } from "@/types/order";
+import { VendorReviewForm } from "@/components/staff/vendor-review-form";
 
 function HistorySkeleton() {
   return (
@@ -270,6 +271,16 @@ export function StaffOrderHistoryPage() {
                         )}`
                       : ""}
                   </p>
+                ) : null}
+                {entry.canReview && entry.vendor ? (
+                  <div className="pt-4">
+                    <VendorReviewForm
+                      menuWeekId={entry.menuWeek.id}
+                      vendorName={entry.vendor.name}
+                      review={entry.review}
+                      onSaved={load}
+                    />
+                  </div>
                 ) : null}
               </CardContent>
             </Card>

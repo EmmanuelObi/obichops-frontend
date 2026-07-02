@@ -88,6 +88,14 @@ export function teamMemberStatusLabel(status: string): string {
   }
 }
 
+export function formatVendorRating(
+  averageRating: number | null | undefined,
+  reviewCount: number | undefined,
+): string {
+  if (!reviewCount || averageRating == null) return "—";
+  return `${averageRating.toFixed(1)} ★ (${reviewCount})`;
+}
+
 export function orderStatusLabel(status: string): string {
   switch (status) {
     case "DRAFT":
