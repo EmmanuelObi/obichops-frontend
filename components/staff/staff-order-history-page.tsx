@@ -17,7 +17,7 @@ import {
   uploadExcessPaymentProof,
 } from "@/lib/excess-payment";
 import { apiClient } from "@/lib/api-client";
-import { formatNaira } from "@/lib/format";
+import { formatNaira, formatQuantity } from "@/lib/format";
 import { excessPaymentStatusLabel } from "@/lib/labels";
 import { DAY_LABELS, type DayOfWeek } from "@/types/vendor";
 import type { StaffOrderHistoryResponse } from "@/types/order";
@@ -241,15 +241,27 @@ export function StaffOrderHistoryPage() {
                   >
                     <span>
                       {DAY_LABELS[line.dayOfWeek as DayOfWeek]} · {line.name} ×{" "}
-                      {line.quantity}
+                      {formatQuantity(line.quantity)}
                     </span>
                     <span className="text-muted-foreground">
                       {formatNaira(
-                        (line.unitPriceCentsSnapshot ?? 0) * line.quantity,
+                        Math.round((line.unitPriceCentsSnapshot ?? 0) * line.quantity),
                       )}
                     </span>
                   </div>
                 ))}
+                {entry.order.dayNotes.length > 0 ? (
+                  <div className="space-y-1 border-t border-border/60 pt-2">
+                    {entry.order.dayNotes.map((note) => (
+                      <p key={note.dayOfWeek} className="text-sm">
+                        <span className="font-medium">
+                          {DAY_LABELS[note.dayOfWeek]} note:
+                        </span>{" "}
+                        <span className="text-muted-foreground">{note.note}</span>
+                      </p>
+                    ))}
+                  </div>
+                ) : null}
                 {entry.order.excessPaymentStatus === "PROOF_UPLOADED" ? (
                   <p className="flex items-center gap-1 pt-2 text-xs text-muted-foreground">
                     <CheckCircle2 className="size-3.5 text-warning-foreground" />

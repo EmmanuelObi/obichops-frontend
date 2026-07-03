@@ -16,8 +16,14 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
+import { Textarea } from "@/components/ui/textarea";
 import { apiClient } from "@/lib/api-client";
-import { formatNaira } from "@/lib/format";
+import {
+  DAY_NOTE_MAX_LENGTH,
+  dayNotesToPayload,
+  dayNotesToRecord,
+} from "@/lib/day-notes";
+import { formatNaira, formatQuantity } from "@/lib/format";
 import { orderDayLimitMessage } from "@/lib/order-day-limit";
 import { calculateOrderTotals } from "@/lib/order-totals";
 import { computePackSummary, filterFoodCartLines } from "@/lib/pack-lines";
@@ -67,6 +73,7 @@ export function AdminProxyOrderingPage({
   const [data, setData] = useState<CurrentMenuWeekResponse | null>(null);
   const [order, setOrder] = useState<StaffOrder | null>(null);
   const [cart, setCart] = useState<CartLine[]>([]);
+  const [dayNotes, setDayNotes] = useState<Record<string, string>>({});
   const [activeDay, setActiveDay] = useState<DayOfWeek>("MON");
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
@@ -106,6 +113,7 @@ export function AdminProxyOrderingPage({
 
       const packIds = new Set((context.packMenu ?? []).map((p) => p.id));
       setCart(lineItemsToCart(orderQuery.order?.lineItems ?? [], packIds));
+      setDayNotes(dayNotesToRecord(orderQuery.order?.dayNotes));
 
       if (context.menuWeek?.orderableDays[0]) {
         setActiveDay(context.menuWeek.orderableDays[0]);
@@ -299,12 +307,14 @@ export function AdminProxyOrderingPage({
   function startEditing() {
     if (!order) return;
     setCart(lineItemsToCart(order.lineItems, packItemIds));
+    setDayNotes(dayNotesToRecord(order.dayNotes));
     setIsEditing(true);
   }
 
   function cancelEditing() {
     if (!order) return;
     setCart(lineItemsToCart(order.lineItems, packItemIds));
+    setDayNotes(dayNotesToRecord(order.dayNotes));
     setIsEditing(false);
   }
 
@@ -337,9 +347,11 @@ export function AdminProxyOrderingPage({
         {
           recipient: toProxyOrderRecipientPayload(recipient),
           lineItems: cart,
+          dayNotes: dayNotesToPayload(dayNotes, daysWithItems),
         },
       );
       setOrder(result.order);
+      setDayNotes(dayNotesToRecord(result.order.dayNotes));
       setIsEditing(false);
       toast.success("Draft saved");
     } catch (err) {
@@ -361,6 +373,7 @@ export function AdminProxyOrderingPage({
         {
           recipient: toProxyOrderRecipientPayload(recipient),
           lineItems: cart,
+          dayNotes: dayNotesToPayload(dayNotes, daysWithItems),
         },
       );
       const result = await apiClient(token).post<{ order: StaffOrder }>(
@@ -368,6 +381,7 @@ export function AdminProxyOrderingPage({
         { orderId: saved.order.id },
       );
       setOrder(result.order);
+      setDayNotes(dayNotesToRecord(result.order.dayNotes));
       setExcessModalOpen(false);
       setIsEditing(false);
       toast.success(
@@ -580,17 +594,17 @@ export function AdminProxyOrderingPage({
                           <Button
                             variant="outline"
                             size="icon-sm"
-                            onClick={() => updateQuantity(item.id, qty - 1)}
+                            onClick={() => updateQuantity(item.id, qty - 0.5)}
                           >
                             <Minus />
                           </Button>
                           <span className="w-8 text-center text-sm font-medium">
-                            {qty}
+                            {formatQuantity(qty)}
                           </span>
                           <Button
                             variant="outline"
                             size="icon-sm"
-                            onClick={() => updateQuantity(item.id, qty + 1)}
+                            onClick={() => updateQuantity(item.id, qty + 0.5)}
                           >
                             <Plus />
                           </Button>
@@ -603,6 +617,41 @@ export function AdminProxyOrderingPage({
             );
           })
         )}
+
+        {menuForDay.length > 0 && daysWithItems.includes(activeDay) ? (
+          canEdit ? (
+            <div className="space-y-1.5 rounded-xl border p-4">
+              <label htmlFor="day-note" className="text-sm font-medium">
+                Note for the kitchen — {DAY_LABELS[activeDay]}
+              </label>
+              <Textarea
+                id="day-note"
+                value={dayNotes[activeDay] ?? ""}
+                maxLength={DAY_NOTE_MAX_LENGTH}
+                placeholder="e.g. no onions, extra spicy, allergic to nuts"
+                onChange={(event) =>
+                  setDayNotes((prev) => ({
+                    ...prev,
+                    [activeDay]: event.target.value,
+                  }))
+                }
+              />
+              <p className="text-xs text-muted-foreground">
+                Shared with the vendor for {DAY_LABELS[activeDay]}.{" "}
+                {(dayNotes[activeDay] ?? "").length}/{DAY_NOTE_MAX_LENGTH}
+              </p>
+            </div>
+          ) : (dayNotes[activeDay] ?? "").trim() ? (
+            <div className="space-y-1 rounded-xl border p-4">
+              <p className="text-sm font-medium">
+                Note for the kitchen — {DAY_LABELS[activeDay]}
+              </p>
+              <p className="text-sm text-muted-foreground">
+                {dayNotes[activeDay]}
+              </p>
+            </div>
+          ) : null
+        ) : null}
       </div>
 
       {cartSummary.length > 0 ? (
@@ -626,7 +675,8 @@ export function AdminProxyOrderingPage({
                   className="flex justify-between text-sm"
                 >
                   <span>
-                    {DAY_LABELS[line.dayOfWeek]} · {line.name} × {line.quantity}
+                    {DAY_LABELS[line.dayOfWeek]} · {line.name} ×{" "}
+                    {formatQuantity(line.quantity)}
                   </span>
                   <span className="text-muted-foreground">
                     {formatNaira(line.priceCents * line.quantity)}
@@ -695,6 +745,7 @@ export function AdminProxyOrderingPage({
         orderDayCount={pricedCart.orderDayCount}
         maxOrderAmountCents={menuWeek.maxOrderAmountCents}
         cart={cart}
+        dayNotes={dayNotesToPayload(dayNotes, daysWithItems)}
         vendor={data?.vendor ?? null}
         token={token}
         onCancel={() => setExcessModalOpen(false)}

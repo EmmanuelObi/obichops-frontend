@@ -15,12 +15,18 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
+import { Textarea } from "@/components/ui/textarea";
 import { BudgetBar } from "@/components/staff/budget-bar";
 import { DayTabs } from "@/components/staff/day-tabs";
 import { ExcessPaymentModal } from "@/components/staff/excess-acknowledge-modal";
 import { OrderingWindowBanner } from "@/components/staff/ordering-window-banner";
 import { apiClient } from "@/lib/api-client";
-import { formatNaira } from "@/lib/format";
+import {
+  DAY_NOTE_MAX_LENGTH,
+  dayNotesToPayload,
+  dayNotesToRecord,
+} from "@/lib/day-notes";
+import { formatNaira, formatQuantity } from "@/lib/format";
 import { orderDayLimitMessage } from "@/lib/order-day-limit";
 import { computePackSummary, filterFoodCartLines } from "@/lib/pack-lines";
 import { calculateOrderTotals } from "@/lib/order-totals";
@@ -73,6 +79,7 @@ export function StaffOrderingPage() {
   const [data, setData] = useState<CurrentMenuWeekResponse | null>(null);
   const [order, setOrder] = useState<StaffOrder | null>(null);
   const [cart, setCart] = useState<CartLine[]>([]);
+  const [dayNotes, setDayNotes] = useState<Record<string, string>>({});
   const [activeDay, setActiveDay] = useState<DayOfWeek>("MON");
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
@@ -100,6 +107,7 @@ export function StaffOrderingPage() {
         setIsEditing(false);
         const packIds = new Set((weekData.packMenu ?? []).map((p) => p.id));
         setCart(lineItemsToCart(orderData.order?.lineItems ?? [], packIds));
+        setDayNotes(dayNotesToRecord(orderData.order?.dayNotes));
         if (weekData.menuWeek.orderableDays[0]) {
           setActiveDay(weekData.menuWeek.orderableDays[0]);
         }
@@ -298,12 +306,14 @@ export function StaffOrderingPage() {
   function startEditing() {
     if (!order) return;
     setCart(lineItemsToCart(order.lineItems, packItemIds));
+    setDayNotes(dayNotesToRecord(order.dayNotes));
     setIsEditing(true);
   }
 
   function cancelEditing() {
     if (!order) return;
     setCart(lineItemsToCart(order.lineItems, packItemIds));
+    setDayNotes(dayNotesToRecord(order.dayNotes));
     setIsEditing(false);
   }
 
@@ -338,8 +348,10 @@ export function StaffOrderingPage() {
       const result = await apiClient(token).put<{ order: StaffOrder }>("/orders/me", {
         menuWeekId: menuWeek.id,
         lineItems: cart,
+        dayNotes: dayNotesToPayload(dayNotes, daysWithItems),
       });
       setOrder(result.order);
+      setDayNotes(dayNotesToRecord(result.order.dayNotes));
       setIsEditing(false);
       toast.success("Draft saved");
     } catch (err) {
@@ -360,12 +372,14 @@ export function StaffOrderingPage() {
       await apiClient(token).put("/orders/me", {
         menuWeekId: menuWeek.id,
         lineItems: cart,
+        dayNotes: dayNotesToPayload(dayNotes, daysWithItems),
       });
       const result = await apiClient(token).post<{ order: StaffOrder }>(
         "/orders/me/submit",
         { menuWeekId: menuWeek.id },
       );
       setOrder(result.order);
+      setDayNotes(dayNotesToRecord(result.order.dayNotes));
       setExcessModalOpen(false);
       setIsEditing(false);
       toast.success(isResubmit ? "Order updated!" : "Order submitted!");
@@ -518,7 +532,7 @@ export function StaffOrderingPage() {
                       {isSubmitted && !isEditing && qty > 0 ? (
                         <Badge variant="outline" className="gap-1">
                           <CheckCircle2 className="size-3" />
-                          {qty} ordered
+                          {formatQuantity(qty)} ordered
                         </Badge>
                       ) : null}
                     </div>
@@ -559,17 +573,17 @@ export function StaffOrderingPage() {
                           <Button
                             variant="outline"
                             size="icon-sm"
-                            onClick={() => updateQuantity(item.id, qty - 1)}
+                            onClick={() => updateQuantity(item.id, qty - 0.5)}
                           >
                             <Minus />
                           </Button>
                           <span className="w-8 text-center text-sm font-medium">
-                            {qty}
+                            {formatQuantity(qty)}
                           </span>
                           <Button
                             variant="outline"
                             size="icon-sm"
-                            onClick={() => updateQuantity(item.id, qty + 1)}
+                            onClick={() => updateQuantity(item.id, qty + 0.5)}
                           >
                             <Plus />
                           </Button>
@@ -588,6 +602,41 @@ export function StaffOrderingPage() {
             );
           })
         )}
+
+        {menuForDay.length > 0 && daysWithItems.includes(activeDay) ? (
+          canEdit ? (
+            <div className="space-y-1.5 rounded-xl border p-4">
+              <label htmlFor="day-note" className="text-sm font-medium">
+                Note for the kitchen — {DAY_LABELS[activeDay]}
+              </label>
+              <Textarea
+                id="day-note"
+                value={dayNotes[activeDay] ?? ""}
+                maxLength={DAY_NOTE_MAX_LENGTH}
+                placeholder="e.g. no onions, extra spicy, allergic to nuts"
+                onChange={(event) =>
+                  setDayNotes((prev) => ({
+                    ...prev,
+                    [activeDay]: event.target.value,
+                  }))
+                }
+              />
+              <p className="text-xs text-muted-foreground">
+                Shared with the vendor for {DAY_LABELS[activeDay]}.{" "}
+                {(dayNotes[activeDay] ?? "").length}/{DAY_NOTE_MAX_LENGTH}
+              </p>
+            </div>
+          ) : (dayNotes[activeDay] ?? "").trim() ? (
+            <div className="space-y-1 rounded-xl border p-4">
+              <p className="text-sm font-medium">
+                Note for the kitchen — {DAY_LABELS[activeDay]}
+              </p>
+              <p className="text-sm text-muted-foreground">
+                {dayNotes[activeDay]}
+              </p>
+            </div>
+          ) : null
+        ) : null}
       </div>
 
       {cartSummary.length > 0 ? (
@@ -611,7 +660,8 @@ export function StaffOrderingPage() {
                   className="flex justify-between text-sm"
                 >
                   <span>
-                    {DAY_LABELS[line.dayOfWeek]} · {line.name} × {line.quantity}
+                    {DAY_LABELS[line.dayOfWeek]} · {line.name} ×{" "}
+                    {formatQuantity(line.quantity)}
                   </span>
                   <span className="text-muted-foreground">
                     {formatNaira(line.priceCents * line.quantity)}
@@ -675,6 +725,7 @@ export function StaffOrderingPage() {
         maxOrderAmountCents={menuWeek.maxOrderAmountCents}
         menuWeekId={menuWeek.id}
         cart={cart}
+        dayNotes={dayNotesToPayload(dayNotes, daysWithItems)}
         vendor={data?.vendor ?? null}
         token={token}
         onCancel={() => setExcessModalOpen(false)}

@@ -28,6 +28,7 @@ import { formatNaira } from "@/lib/format";
 import { vendorHasPaymentDetails } from "@/lib/vendor-payment";
 
 type CartLine = { menuItemId: string; dayOfWeek: DayOfWeek; quantity: number };
+type DayNotePayload = { dayOfWeek: DayOfWeek; note: string };
 
 interface AdminProxyExcessModalProps {
   open: boolean;
@@ -40,6 +41,7 @@ interface AdminProxyExcessModalProps {
   orderDayCount: number;
   maxOrderAmountCents: number;
   cart: CartLine[];
+  dayNotes?: DayNotePayload[];
   vendor: CurrentMenuWeekResponse["vendor"];
   token: string | undefined;
   onCancel: () => void;
@@ -59,6 +61,7 @@ export function AdminProxyExcessModal({
   orderDayCount,
   maxOrderAmountCents,
   cart,
+  dayNotes,
   vendor,
   token,
   onCancel,
@@ -85,6 +88,7 @@ export function AdminProxyExcessModal({
         {
           recipient: toProxyOrderRecipientPayload(recipient),
           lineItems: cart,
+          dayNotes: dayNotes ?? [],
         },
       );
       setOrderId(result.order.id);
@@ -103,7 +107,7 @@ export function AdminProxyExcessModal({
     } finally {
       setPreparing(false);
     }
-  }, [token, cart, weekId, recipient, onOrderUpdated]);
+  }, [token, cart, dayNotes, weekId, recipient, onOrderUpdated]);
 
   useEffect(() => {
     if (open) {

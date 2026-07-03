@@ -11,6 +11,11 @@ export interface OrderLineItem {
   unitPriceCentsSnapshot: number | null;
 }
 
+export interface OrderDayNote {
+  dayOfWeek: DayOfWeek;
+  note: string;
+}
+
 export interface StaffOrder {
   id: string;
   menuWeekId: string;
@@ -19,6 +24,7 @@ export interface StaffOrder {
   placedByUserId?: string | null;
   status: OrderStatus;
   lineItems: OrderLineItem[];
+  dayNotes: OrderDayNote[];
   totalCents: number;
   companyCoveredCents: number;
   excessCents: number;

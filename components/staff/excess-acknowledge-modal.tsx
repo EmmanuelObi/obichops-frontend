@@ -26,6 +26,7 @@ import { formatNaira } from "@/lib/format";
 import { vendorHasPaymentDetails } from "@/lib/vendor-payment";
 
 type CartLine = { menuItemId: string; dayOfWeek: DayOfWeek; quantity: number };
+type DayNotePayload = { dayOfWeek: DayOfWeek; note: string };
 
 interface ExcessPaymentModalProps {
   open: boolean;
@@ -37,6 +38,7 @@ interface ExcessPaymentModalProps {
   maxOrderAmountCents: number;
   menuWeekId: string;
   cart: CartLine[];
+  dayNotes?: DayNotePayload[];
   vendor: CurrentMenuWeekResponse["vendor"];
   token: string | undefined;
   onCancel: () => void;
@@ -55,6 +57,7 @@ export function ExcessPaymentModal({
   maxOrderAmountCents,
   menuWeekId,
   cart,
+  dayNotes,
   vendor,
   token,
   onCancel,
@@ -78,7 +81,7 @@ export function ExcessPaymentModal({
     try {
       const result = await apiClient(token).put<{ order: StaffOrder }>(
         "/orders/me",
-        { menuWeekId, lineItems: cart },
+        { menuWeekId, lineItems: cart, dayNotes: dayNotes ?? [] },
       );
       setOrderId(result.order.id);
       onOrderUpdated(result.order);
@@ -96,7 +99,7 @@ export function ExcessPaymentModal({
     } finally {
       setPreparing(false);
     }
-  }, [token, cart, menuWeekId, onOrderUpdated]);
+  }, [token, cart, dayNotes, menuWeekId, onOrderUpdated]);
 
   useEffect(() => {
     if (open) {

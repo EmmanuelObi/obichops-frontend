@@ -32,7 +32,7 @@ export function computePackQuantityForDay(
     (sum, line) => sum + line.packsRequired * line.quantity,
     0,
   );
-  return Math.max(1, itemPacks);
+  return Math.max(1, Math.ceil(itemPacks));
 }
 
 export function computePackSummary(
