@@ -1,18 +1,22 @@
 "use client";
 
+import Link from "next/link";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useCallback, useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { useSession } from "next-auth/react";
-import { Building2 } from "lucide-react";
+import { DateTime } from "luxon";
+import { Building2, Eye } from "lucide-react";
 import { toast } from "sonner";
 
-import type { Workspace } from "@/types/auth";
+import type { PlatformWorkspace } from "@/types/platform";
+import { ManageWorkspaceButton } from "@/components/platform/manage-workspace-button";
+import { WorkspaceStatusActions } from "@/components/platform/workspace-status-actions";
 import { EmptyState } from "@/components/layout/empty-state";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
+import { Button, buttonVariants } from "@/components/ui/button";
 import {
   Form,
   FormControl,
@@ -32,6 +36,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { apiClient } from "@/lib/api-client";
+import { menuWeekStatusLabel } from "@/lib/labels";
 
 const createSchema = z.object({
   name: z.string().min(2, "Name is required"),
@@ -43,10 +48,15 @@ const createSchema = z.object({
 
 type CreateValues = z.input<typeof createSchema>;
 
+function formatLastActivity(value: string | null): string {
+  if (!value) return "—";
+  return DateTime.fromISO(value).toFormat("d LLL yyyy");
+}
+
 export function WorkspacesManager() {
   const { data: session } = useSession();
   const token = session?.accessToken;
-  const [workspaces, setWorkspaces] = useState<Workspace[]>([]);
+  const [workspaces, setWorkspaces] = useState<PlatformWorkspace[]>([]);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
 
@@ -60,24 +70,10 @@ export function WorkspacesManager() {
     setLoading(true);
     setError(null);
     try {
-      const data = await apiClient(token).get<{
-        workspaces: Array<{
-          id: string;
-          name: string;
-          slug: string;
-          isActive: boolean;
-          createdAt?: string;
-        }>;
-      }>("/platform/workspaces");
-      setWorkspaces(
-        data.workspaces.map((workspace) => ({
-          _id: workspace.id,
-          name: workspace.name,
-          slug: workspace.slug,
-          isActive: workspace.isActive,
-          createdAt: workspace.createdAt,
-        })),
+      const data = await apiClient(token).get<{ workspaces: PlatformWorkspace[] }>(
+        "/platform/workspaces",
       );
+      setWorkspaces(data.workspaces);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to load workspaces");
     } finally {
@@ -175,20 +171,57 @@ export function WorkspacesManager() {
         <Table>
           <TableHeader>
             <TableRow>
-              <TableHead>Name</TableHead>
-              <TableHead>Slug</TableHead>
-              <TableHead>Status</TableHead>
+              <TableHead>Workspace</TableHead>
+              <TableHead>Team</TableHead>
+              <TableHead>Vendors</TableHead>
+              <TableHead>Week</TableHead>
+              <TableHead>Orders</TableHead>
+              <TableHead>Last activity</TableHead>
+              <TableHead className="text-right">Actions</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
               {workspaces.map((workspace) => (
-                <TableRow key={workspace._id}>
-                  <TableCell className="font-medium">{workspace.name}</TableCell>
-                  <TableCell>{workspace.slug}</TableCell>
+                <TableRow key={workspace.id}>
                   <TableCell>
-                    <Badge variant={workspace.isActive ? "default" : "secondary"}>
-                      {workspace.isActive ? "Active" : "Inactive"}
-                    </Badge>
+                    <div className="space-y-1">
+                      <p className="font-medium">{workspace.name}</p>
+                      <div className="flex flex-wrap items-center gap-2">
+                        <span className="text-sm text-muted-foreground">
+                          {workspace.slug}
+                        </span>
+                        <Badge variant={workspace.isActive ? "default" : "secondary"}>
+                          {workspace.isActive ? "Active" : "Inactive"}
+                        </Badge>
+                      </div>
+                    </div>
+                  </TableCell>
+                  <TableCell>{workspace.stats.activeTeamCount}</TableCell>
+                  <TableCell>{workspace.stats.vendorCount}</TableCell>
+                  <TableCell>
+                    {workspace.stats.currentMenuWeekStatus
+                      ? menuWeekStatusLabel(workspace.stats.currentMenuWeekStatus)
+                      : "—"}
+                  </TableCell>
+                  <TableCell>{workspace.stats.submittedOrdersCount}</TableCell>
+                  <TableCell>
+                    {formatLastActivity(workspace.stats.lastActivityAt)}
+                  </TableCell>
+                  <TableCell className="text-right">
+                    <div className="flex flex-wrap justify-end gap-2">
+                      <WorkspaceStatusActions
+                        workspace={workspace}
+                        onUpdated={load}
+                      />
+                      <ManageWorkspaceButton workspace={workspace} />
+                      <Link
+                        href={`/platform/workspaces/${workspace.id}`}
+                        className={buttonVariants({ variant: "outline", size: "sm" })}
+                      >
+                        <Eye className="size-4" />
+                        View
+                      </Link>
+                    </div>
                   </TableCell>
                 </TableRow>
               ))}

@@ -1,15 +1,19 @@
 import { NextResponse } from "next/server";
 
 import { auth } from "@/auth";
+import { PLATFORM_WORKSPACE_COOKIE_ID } from "@/lib/platform-workspace";
 
 export default auth((req) => {
   const { pathname } = req.nextUrl;
   const session = req.auth;
   const role = session?.user?.role;
   const workspaceId = session?.user?.workspaceId ?? null;
+  const platformWorkspaceId =
+    req.cookies.get(PLATFORM_WORKSPACE_COOKIE_ID)?.value ?? null;
   const mustChangePassword = session?.user?.mustChangePassword;
   const needsProfileCompletion = session?.user?.needsProfileCompletion;
   const isPlatformOnlySuperAdmin = role === "SUPER_ADMIN" && !workspaceId;
+  const superAdminHasWorkspaceContext = Boolean(platformWorkspaceId);
 
   const isAdminRoute = pathname.startsWith("/admin");
   const isPlatformRoute = pathname.startsWith("/platform");
@@ -41,7 +45,11 @@ export default auth((req) => {
     return NextResponse.redirect(new URL("/complete-profile", req.nextUrl.origin));
   }
 
-  if (isPlatformOnlySuperAdmin && (isAdminRoute || isStaffRoute)) {
+  if (
+    isPlatformOnlySuperAdmin &&
+    (isAdminRoute || isStaffRoute) &&
+    !superAdminHasWorkspaceContext
+  ) {
     return NextResponse.redirect(
       new URL("/platform/workspaces", req.nextUrl.origin),
     );
@@ -71,5 +79,5 @@ export default auth((req) => {
 });
 
 export const config = {
-  matcher: ["/admin/:path*", "/platform/:path*", "/staff/:path*", "/complete-profile", "/change-password"],
+  matcher: ["/admin/:path*", "/platform", "/platform/:path*", "/staff/:path*", "/complete-profile", "/change-password"],
 };

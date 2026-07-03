@@ -22,13 +22,13 @@ export default function PlatformWorkspacesPage() {
     <PageContainer>
       <PageHeader
         title="Workspaces"
-        description="Create and review customer workspaces across the platform."
+        description="Create workspaces and monitor team activity, ordering, and vendors across the platform."
         breadcrumbs={
           <Breadcrumb>
             <BreadcrumbList>
               <BreadcrumbItem>
-                <BreadcrumbLink render={<Link href="/admin" />}>
-                  Overview
+                <BreadcrumbLink render={<Link href="/platform" />}>
+                  Platform
                 </BreadcrumbLink>
               </BreadcrumbItem>
               <BreadcrumbSeparator />

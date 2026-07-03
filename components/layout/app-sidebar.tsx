@@ -29,7 +29,8 @@ import {
   SidebarSeparator,
 } from "@/components/ui/sidebar";
 import { roleLabel } from "@/lib/labels";
-import { useWorkspaceBrand } from "@/hooks/use-workspace-brand";
+import { clearPlatformWorkspaceCookies } from "@/lib/platform-workspace";
+import { useEffectiveWorkspace } from "@/hooks/use-effective-workspace";
 import type { Role } from "@/types/auth";
 
 interface NavItem {
@@ -44,31 +45,31 @@ const adminNav: NavItem[] = [
     title: "Overview",
     href: "/admin",
     icon: LayoutDashboard,
-    roles: ["ADMIN"],
+    roles: ["ADMIN", "SUPER_ADMIN"],
   },
   {
     title: "Menu weeks",
     href: "/admin/weeks",
     icon: CalendarDays,
-    roles: ["ADMIN"],
+    roles: ["ADMIN", "SUPER_ADMIN"],
   },
   {
     title: "Vendors",
     href: "/admin/vendors",
     icon: Store,
-    roles: ["ADMIN"],
+    roles: ["ADMIN", "SUPER_ADMIN"],
   },
   {
     title: "Team",
     href: "/admin/allowed-emails",
     icon: Users,
-    roles: ["ADMIN"],
+    roles: ["ADMIN", "SUPER_ADMIN"],
   },
   {
     title: "Reporting",
     href: "/admin/reports",
     icon: BarChart3,
-    roles: ["ADMIN"],
+    roles: ["ADMIN", "SUPER_ADMIN"],
   },
 ];
 
@@ -89,6 +90,12 @@ const staffNav: NavItem[] = [
 
 const platformNav: NavItem[] = [
   {
+    title: "Dashboard",
+    href: "/platform",
+    icon: LayoutDashboard,
+    roles: ["SUPER_ADMIN"],
+  },
+  {
     title: "Workspaces",
     href: "/platform/workspaces",
     icon: Building2,
@@ -101,7 +108,7 @@ interface AppSidebarProps {
 }
 
 function isActive(pathname: string, href: string): boolean {
-  if (href === "/admin" || href === "/staff") {
+  if (href === "/admin" || href === "/staff" || href === "/platform") {
     return pathname === href;
   }
   return pathname === href || pathname.startsWith(`${href}/`);
@@ -109,27 +116,31 @@ function isActive(pathname: string, href: string): boolean {
 
 export function AppSidebar({ role }: AppSidebarProps) {
   const pathname = usePathname();
-  const { displayName, hasWorkspace } = useWorkspaceBrand();
+  const { displayName, hasWorkspace, canUseAdmin, isSuperAdmin, isManagingWorkspace } =
+    useEffectiveWorkspace();
   const isStaffOnly = role === "STAFF";
-  const isSuperAdmin = role === "SUPER_ADMIN";
-  const isAdmin = role === "ADMIN";
+  const isAdmin = role === "ADMIN" || (isSuperAdmin && canUseAdmin);
   const homeHref = isSuperAdmin
-    ? "/platform/workspaces"
+    ? isManagingWorkspace
+      ? "/admin"
+      : "/platform"
     : isStaffOnly
       ? "/staff"
       : "/admin";
 
   const brandTitle = displayName;
   const brandSubtitle = hasWorkspace
-    ? role
-      ? roleLabel(role)
-      : "Workspace"
+    ? isManagingWorkspace
+      ? "Platform admin"
+      : role
+        ? roleLabel(role)
+        : "Workspace"
     : role
       ? roleLabel(role)
       : "Platform";
 
   const visibleAdminNav = adminNav.filter((item) =>
-    role ? item.roles.includes(role) : false,
+    canUseAdmin && role ? item.roles.includes(role) : false,
   );
   const visibleStaffNav = staffNav.filter((item) =>
     role ? item.roles.includes(role) : false,
@@ -271,7 +282,10 @@ export function AppSidebar({ role }: AppSidebarProps) {
             <SidebarMenuButton
               tooltip="Sign out"
               className="text-muted-foreground hover:text-foreground"
-              onClick={() => void signOut({ callbackUrl: "/login" })}
+              onClick={() => {
+                clearPlatformWorkspaceCookies();
+                void signOut({ callbackUrl: "/login" });
+              }}
             >
               <LogOut className="size-4" strokeWidth={1.75} />
               <span>Sign out</span>

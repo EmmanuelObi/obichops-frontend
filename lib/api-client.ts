@@ -2,6 +2,7 @@ import {
   notifyUnauthorized,
   shouldSignOutOnUnauthorized,
 } from "@/lib/unauthorized-handler";
+import { getPlatformWorkspaceIdForApi } from "@/lib/platform-workspace";
 
 const API_BASE_URL =
   process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:3001";
@@ -28,6 +29,9 @@ export async function apiFetch<T>(
 ): Promise<T> {
   const { token, json, headers, body, ...rest } = options;
 
+  const platformWorkspaceId =
+    typeof document !== "undefined" ? getPlatformWorkspaceIdForApi() : null;
+
   const response = await fetch(`${API_BASE_URL}${path}`, {
     ...rest,
     headers: {
@@ -35,6 +39,9 @@ export async function apiFetch<T>(
         ? { "Content-Type": "application/json" }
         : {}),
       ...(token ? { Authorization: `Bearer ${token}` } : {}),
+      ...(platformWorkspaceId
+        ? { "X-Workspace-Id": platformWorkspaceId }
+        : {}),
       ...headers,
     },
     body: json !== undefined ? JSON.stringify(json) : body,

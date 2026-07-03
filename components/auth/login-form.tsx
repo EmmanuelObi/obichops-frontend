@@ -74,7 +74,7 @@ export function LoginForm() {
       session?.user?.role === "SUPER_ADMIN" && !session.user.workspaceId;
 
     if (isPlatformOnlySuperAdmin) {
-      router.push("/platform/workspaces");
+      router.push("/platform");
       router.refresh();
       return;
     }
