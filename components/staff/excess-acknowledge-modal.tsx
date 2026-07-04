@@ -74,6 +74,11 @@ export function ExcessPaymentModal({
 
   const hasVendorPaymentDetails = vendorHasPaymentDetails(vendor);
 
+  // Read the latest notes via a ref so this callback stays referentially stable
+  // (the `dayNotes` prop is a fresh array each render and would otherwise loop).
+  const dayNotesRef = useRef(dayNotes);
+  dayNotesRef.current = dayNotes;
+
   const prepareDraft = useCallback(async () => {
     if (!token || cart.length === 0) return;
     setPreparing(true);
@@ -81,7 +86,7 @@ export function ExcessPaymentModal({
     try {
       const result = await apiClient(token).put<{ order: StaffOrder }>(
         "/orders/me",
-        { menuWeekId, lineItems: cart, dayNotes: dayNotes ?? [] },
+        { menuWeekId, lineItems: cart, dayNotes: dayNotesRef.current ?? [] },
       );
       setOrderId(result.order.id);
       onOrderUpdated(result.order);
@@ -99,7 +104,7 @@ export function ExcessPaymentModal({
     } finally {
       setPreparing(false);
     }
-  }, [token, cart, dayNotes, menuWeekId, onOrderUpdated]);
+  }, [token, cart, menuWeekId, onOrderUpdated]);
 
   useEffect(() => {
     if (open) {

@@ -78,6 +78,11 @@ export function AdminProxyExcessModal({
 
   const hasVendorPaymentDetails = vendorHasPaymentDetails(vendor);
 
+  // Read the latest notes via a ref so this callback stays referentially stable
+  // (the `dayNotes` prop is a fresh array each render and would otherwise loop).
+  const dayNotesRef = useRef(dayNotes);
+  dayNotesRef.current = dayNotes;
+
   const prepareDraft = useCallback(async () => {
     if (!token || cart.length === 0) return;
     setPreparing(true);
@@ -88,7 +93,7 @@ export function AdminProxyExcessModal({
         {
           recipient: toProxyOrderRecipientPayload(recipient),
           lineItems: cart,
-          dayNotes: dayNotes ?? [],
+          dayNotes: dayNotesRef.current ?? [],
         },
       );
       setOrderId(result.order.id);
@@ -107,7 +112,7 @@ export function AdminProxyExcessModal({
     } finally {
       setPreparing(false);
     }
-  }, [token, cart, dayNotes, weekId, recipient, onOrderUpdated]);
+  }, [token, cart, weekId, recipient, onOrderUpdated]);
 
   useEffect(() => {
     if (open) {
