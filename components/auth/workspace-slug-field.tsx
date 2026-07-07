@@ -29,7 +29,7 @@ export function WorkspaceSlugField<T extends FieldValues>({
   control,
   name,
   required = false,
-  description = "The short name for your team workspace (e.g. verto).",
+  description = "The short name for your team workspace (e.g. acme-corp).",
 }: WorkspaceSlugFieldProps<T>) {
   return (
     <FormField

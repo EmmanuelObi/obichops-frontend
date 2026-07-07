@@ -116,7 +116,7 @@ export function RegisterForm() {
                   {...field}
                   type="email"
                   autoComplete="email"
-                  placeholder="you@vertofx.com"
+                  placeholder="you@company.com"
                 />
               </FormControl>
               <FormMessage />
