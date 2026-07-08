@@ -74,7 +74,7 @@ export function WeekOrdersManager({ weekId }: WeekOrdersManagerProps) {
   const submittedCount = orders.filter((o) => o.status === "SUBMITTED").length;
   const excessTotal = orders.reduce((sum, o) => sum + o.excessCents, 0);
 
-  async function handleDownload(format: "csv" | "pdf") {
+  async function handleDownload(format: "csv" | "pdf" | "docx") {
     if (!token) return;
     setError(null);
     try {
@@ -149,10 +149,13 @@ export function WeekOrdersManager({ weekId }: WeekOrdersManagerProps) {
           Place order
         </Button>
         <Button variant="outline" size="sm" onClick={() => void handleDownload("csv")}>
-          Download CSV
+          Download as CSV
         </Button>
         <Button variant="outline" size="sm" onClick={() => void handleDownload("pdf")}>
-          Download PDF
+          Download as PDF
+        </Button>
+        <Button variant="outline" size="sm" onClick={() => void handleDownload("docx")}>
+          Download as Word
         </Button>
       </div>
 
