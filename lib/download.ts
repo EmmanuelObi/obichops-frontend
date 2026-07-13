@@ -24,10 +24,22 @@ export async function downloadAuthenticatedFile(
 
   const blob = await response.blob();
   const disposition = response.headers.get("Content-Disposition");
-  const filename =
+  let filename =
     disposition?.match(/filename="([^"]+)"/)?.[1] ?? fallbackFilename;
 
-  const url = URL.createObjectURL(blob);
+  // Ensure the download keeps a usable extension even if headers are stripped.
+  if (!/\.\w+$/.test(filename) && /\.\w+$/.test(fallbackFilename)) {
+    filename = fallbackFilename;
+  }
+
+  const contentType =
+    response.headers.get("Content-Type") ?? blob.type ?? "application/octet-stream";
+  const typedBlob =
+    blob.type === contentType
+      ? blob
+      : new Blob([blob], { type: contentType.split(";")[0]?.trim() || contentType });
+
+  const url = URL.createObjectURL(typedBlob);
   const link = document.createElement("a");
   link.href = url;
   link.download = filename;
