@@ -20,13 +20,13 @@ import { Button } from "@/components/ui/button";
 import { apiClient } from "@/lib/api-client";
 
 interface WorkspaceStatusActionsProps {
-  workspace: Pick<PlatformWorkspace, "id" | "name" | "isActive">;
+  chopspace: Pick<PlatformWorkspace, "id" | "name" | "isActive">;
   onUpdated?: () => void | Promise<void>;
   size?: "sm" | "default";
 }
 
 export function WorkspaceStatusActions({
-  workspace,
+  chopspace,
   onUpdated,
   size = "sm",
 }: WorkspaceStatusActionsProps) {
@@ -39,24 +39,24 @@ export function WorkspaceStatusActions({
     if (!token) return;
     setSaving(true);
     try {
-      await apiClient(token).patch(`/platform/workspaces/${workspace.id}`, {
-        isActive: !workspace.isActive,
+      await apiClient(token).patch(`/platform/workspaces/${chopspace.id}`, {
+        isActive: !chopspace.isActive,
       });
       toast.success(
-        workspace.isActive ? "Workspace suspended" : "Workspace reactivated",
+        chopspace.isActive ? "Chopspace suspended" : "Chopspace reactivated",
       );
       setConfirmOpen(false);
       await onUpdated?.();
     } catch (err) {
       toast.error(
-        err instanceof Error ? err.message : "Failed to update workspace",
+        err instanceof Error ? err.message : "Failed to update chopspace",
       );
     } finally {
       setSaving(false);
     }
   }
 
-  if (workspace.isActive) {
+  if (chopspace.isActive) {
     return (
       <>
         <Button
@@ -72,10 +72,10 @@ export function WorkspaceStatusActions({
         <AlertDialog open={confirmOpen} onOpenChange={setConfirmOpen}>
           <AlertDialogContent>
             <AlertDialogHeader>
-              <AlertDialogTitle>Suspend {workspace.name}?</AlertDialogTitle>
+              <AlertDialogTitle>Suspend {chopspace.name}?</AlertDialogTitle>
               <AlertDialogDescription>
                 Staff and admins won&apos;t be able to sign in or place orders
-                until this workspace is reactivated. Super admins can still
+                until this chopspace is reactivated. Super admins can still
                 manage it from the platform.
               </AlertDialogDescription>
             </AlertDialogHeader>
@@ -86,7 +86,7 @@ export function WorkspaceStatusActions({
                 disabled={saving}
                 onClick={() => void toggleStatus()}
               >
-                Suspend workspace
+                Suspend chopspace
               </AlertDialogAction>
             </AlertDialogFooter>
           </AlertDialogContent>

@@ -35,7 +35,7 @@ export interface AllowedEmail {
   status: TeamMemberStatus;
 }
 
-export interface Workspace {
+export interface Chopspace {
   _id: string;
   name: string;
   slug: string;

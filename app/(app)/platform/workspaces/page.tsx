@@ -14,15 +14,15 @@ import {
 } from "@/components/ui/breadcrumb";
 
 export const metadata: Metadata = {
-  title: "Workspaces",
+  title: "Chopspaces",
 };
 
 export default function PlatformWorkspacesPage() {
   return (
     <PageContainer>
       <PageHeader
-        title="Workspaces"
-        description="Create workspaces and monitor team activity, ordering, and vendors across the platform."
+        title="Chopspaces"
+        description="Create chopspaces and monitor team activity, ordering, and vendors across the platform."
         breadcrumbs={
           <Breadcrumb>
             <BreadcrumbList>
@@ -33,7 +33,7 @@ export default function PlatformWorkspacesPage() {
               </BreadcrumbItem>
               <BreadcrumbSeparator />
               <BreadcrumbItem>
-                <BreadcrumbPage>Workspaces</BreadcrumbPage>
+                <BreadcrumbPage>Chopspaces</BreadcrumbPage>
               </BreadcrumbItem>
             </BreadcrumbList>
           </Breadcrumb>

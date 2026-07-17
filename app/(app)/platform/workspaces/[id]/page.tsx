@@ -14,7 +14,7 @@ import {
 } from "@/components/ui/breadcrumb";
 
 export const metadata: Metadata = {
-  title: "Workspace overview",
+  title: "Chopspace overview",
 };
 
 interface WorkspaceDetailPageProps {
@@ -29,8 +29,8 @@ export default async function WorkspaceDetailPage({
   return (
     <PageContainer>
       <PageHeader
-        title="Workspace overview"
-        description="Read-only visibility into this workspace's activity."
+        title="Chopspace overview"
+        description="Read-only visibility into this chopspace's activity."
         breadcrumbs={
           <Breadcrumb>
             <BreadcrumbList>
@@ -42,7 +42,7 @@ export default async function WorkspaceDetailPage({
               <BreadcrumbSeparator />
               <BreadcrumbItem>
                 <BreadcrumbLink render={<Link href="/platform/workspaces" />}>
-                  Workspaces
+                  Chopspaces
                 </BreadcrumbLink>
               </BreadcrumbItem>
               <BreadcrumbSeparator />

@@ -19,7 +19,7 @@ const siteUrl =
   process.env.NEXTAUTH_URL?.replace(/\/$/, "") ?? "https://obichops.com";
 
 const siteDescription =
-  "Weekly team meal ordering for workplaces — browse menus, stay within budget, and submit orders before the window closes.";
+  "Weekly team meal ordering for workplaces - browse menus, stay within budget, and submit orders before the window closes.";
 
 export const metadata: Metadata = {
   metadataBase: new URL(siteUrl),

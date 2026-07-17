@@ -13,7 +13,7 @@ export default function AdminReportsPage() {
     <PageContainer>
       <PageHeader
         title="Reporting"
-        description="Weekly and monthly order summaries for finance — company spend, staff excess, and vendor breakdowns."
+        description="Weekly and monthly order summaries for finance - company spend, staff excess, and vendor breakdowns."
       />
       <FinanceReportsManager />
     </PageContainer>

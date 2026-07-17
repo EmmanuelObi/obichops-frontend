@@ -607,7 +607,7 @@ export function StaffOrderingPage() {
           canEdit ? (
             <div className="space-y-1.5 rounded-xl border p-4">
               <label htmlFor="day-note" className="text-sm font-medium">
-                Note for the kitchen — {DAY_LABELS[activeDay]}
+                Note for the kitchen - {DAY_LABELS[activeDay]}
               </label>
               <Textarea
                 id="day-note"
@@ -629,7 +629,7 @@ export function StaffOrderingPage() {
           ) : (dayNotes[activeDay] ?? "").trim() ? (
             <div className="space-y-1 rounded-xl border p-4">
               <p className="text-sm font-medium">
-                Note for the kitchen — {DAY_LABELS[activeDay]}
+                Note for the kitchen - {DAY_LABELS[activeDay]}
               </p>
               <p className="text-sm text-muted-foreground">
                 {dayNotes[activeDay]}

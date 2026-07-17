@@ -197,7 +197,7 @@ export function MenuWeeksManager() {
       if (result.openNotificationError) {
         toast.warning(`Week opened, but email failed: ${result.openNotificationError}`);
       } else if (result.openNotificationSent) {
-        toast.success("Week opened — staff notified by email");
+        toast.success("Week opened - staff notified by email");
       } else {
         toast.success("Week opened for ordering");
       }

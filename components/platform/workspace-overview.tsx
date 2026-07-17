@@ -48,8 +48,8 @@ export function WorkspaceOverviewPanel({
   onUpdated,
   auditRefreshKey = 0,
 }: WorkspaceOverviewPanelProps) {
-  const { workspace, stats, recentMenuWeeks, vendors, recentOrders } = data;
-  const settings = workspace.settings ?? {
+  const { chopspace, stats, recentMenuWeeks, vendors, recentOrders } = data;
+  const settings = chopspace.settings ?? {
     timezone: "Africa/Lagos",
     allowedEmailDomains: [],
     defaultMaxOrderAmountCents: 500_000,
@@ -64,20 +64,20 @@ export function WorkspaceOverviewPanel({
             className={buttonVariants({ variant: "ghost", size: "sm", className: "-ml-2 w-fit" })}
           >
             <ArrowLeft className="size-4" />
-            All workspaces
+            All chopspaces
           </Link>
           <div className="flex flex-wrap items-center gap-3">
             <h1 className="font-serif text-2xl font-semibold tracking-tight">
-              {workspace.name}
+              {chopspace.name}
             </h1>
-            <Badge variant={workspace.isActive ? "default" : "secondary"}>
-              {workspace.isActive ? "Active" : "Inactive"}
+            <Badge variant={chopspace.isActive ? "default" : "secondary"}>
+              {chopspace.isActive ? "Active" : "Inactive"}
             </Badge>
           </div>
           <p className="text-sm text-muted-foreground">
-            Slug <span className="font-mono">{workspace.slug}</span>
-            {workspace.createdAt
-              ? ` · Created ${DateTime.fromISO(workspace.createdAt).toFormat("d LLL yyyy")}`
+            Slug <span className="font-mono">{chopspace.slug}</span>
+            {chopspace.createdAt
+              ? ` · Created ${DateTime.fromISO(chopspace.createdAt).toFormat("d LLL yyyy")}`
               : null}
           </p>
         </div>
@@ -87,11 +87,11 @@ export function WorkspaceOverviewPanel({
           </Badge>
           <div className="flex flex-wrap justify-end gap-2">
             <WorkspaceStatusActions
-              workspace={workspace}
+              chopspace={chopspace}
               onUpdated={onUpdated}
             />
             <ManageWorkspaceButton
-              workspace={workspace}
+              chopspace={chopspace}
               variant="premium"
               size="sm"
             />
@@ -133,7 +133,7 @@ export function WorkspaceOverviewPanel({
               Current week
             </CardDescription>
             <CardTitle className="text-2xl">
-              {stats.currentMenuWeekStatus ?? "—"}
+              {stats.currentMenuWeekStatus ?? "-"}
             </CardTitle>
           </CardHeader>
           <CardContent className="text-sm text-muted-foreground">
@@ -158,21 +158,21 @@ export function WorkspaceOverviewPanel({
       </div>
 
       <WorkspaceAdminForm
-        workspaceId={workspace.id}
+        workspaceId={chopspace.id}
         adminCount={stats.adminCount}
         onCreated={onUpdated}
       />
 
       <WorkspaceSettingsForm
-        workspaceId={workspace.id}
+        workspaceId={chopspace.id}
         settings={settings}
         onUpdated={onUpdated}
       />
 
       <PlatformAuditLog
-        workspaceId={workspace.id}
-        title="Workspace activity"
-        description="Super-admin actions for this workspace."
+        workspaceId={chopspace.id}
+        title="Chopspace activity"
+        description="Super-admin actions for this chopspace."
         refreshKey={auditRefreshKey}
       />
 
@@ -181,7 +181,7 @@ export function WorkspaceOverviewPanel({
           <CardHeader>
             <CardTitle>Recent menu weeks</CardTitle>
             <CardDescription>
-              Latest ordering cycles for this workspace.
+              Latest ordering cycles for this chopspace.
             </CardDescription>
           </CardHeader>
           <CardContent>
@@ -239,7 +239,7 @@ export function WorkspaceOverviewPanel({
           <CardHeader>
             <CardTitle>Vendors</CardTitle>
             <CardDescription>
-              Food suppliers configured for this workspace.
+              Food suppliers configured for this chopspace.
             </CardDescription>
           </CardHeader>
           <CardContent>
@@ -279,7 +279,7 @@ export function WorkspaceOverviewPanel({
             <div className="flex flex-col items-center gap-3 py-8 text-center">
               <Building2 className="size-8 text-muted-foreground/60" />
               <p className="text-sm text-muted-foreground">
-                No submitted orders yet for this workspace.
+                No submitted orders yet for this chopspace.
               </p>
             </div>
           ) : (
@@ -314,7 +314,7 @@ export function WorkspaceOverviewPanel({
                           ? DateTime.fromISO(order.submittedAt).toFormat(
                               "d LLL yyyy, h:mm a",
                             )
-                          : "—"}
+                          : "-"}
                       </TableCell>
                       <TableCell className="text-right">
                         {formatNaira(order.totalCents)}

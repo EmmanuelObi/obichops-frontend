@@ -32,7 +32,7 @@ function AuthBrandPanel() {
           window closes.
         </p>
         <p className="text-primary-foreground/55">
-          Admins manage vendors, weeks, and team access — all in one place.
+          Admins manage vendors, weeks, and team access - all in one place.
         </p>
       </div>
     </>

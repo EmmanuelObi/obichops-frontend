@@ -88,7 +88,7 @@ export function StaffMemberSearch({
               <p className="mt-2 text-sm text-muted-foreground">
                 Already has a{" "}
                 {orderStatusLabel(selectedMember.orderStatus).toLowerCase()} order
-                this week — you can continue or update it.
+                this week - you can continue or update it.
               </p>
             ) : null}
           </div>

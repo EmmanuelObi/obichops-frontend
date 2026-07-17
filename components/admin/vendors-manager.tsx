@@ -65,7 +65,7 @@ type CreateValues = z.infer<typeof createSchema>;
 type EditValues = z.infer<typeof editSchema>;
 
 function maskAccountNumber(accountNumber: string | null): string {
-  if (!accountNumber) return "—";
+  if (!accountNumber) return "-";
   if (accountNumber.length <= 4) return accountNumber;
   return `•••• ${accountNumber.slice(-4)}`;
 }
@@ -360,10 +360,10 @@ export function VendorsManager() {
                         {formatVendorRating(vendor.averageRating, vendor.reviewCount)}
                       </button>
                     ) : (
-                      <span className="text-sm text-muted-foreground">—</span>
+                      <span className="text-sm text-muted-foreground">-</span>
                     )}
                   </TableCell>
-                  <TableCell>{vendor.bankName ?? "—"}</TableCell>
+                  <TableCell>{vendor.bankName ?? "-"}</TableCell>
                   <TableCell className="font-mono text-sm">
                     {maskAccountNumber(vendor.accountNumber)}
                   </TableCell>

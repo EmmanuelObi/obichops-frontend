@@ -8,6 +8,7 @@ import {
   Building2,
   CalendarDays,
   ClipboardList,
+  Inbox,
   LayoutDashboard,
   LogOut,
   ShoppingBag,
@@ -96,9 +97,15 @@ const platformNav: NavItem[] = [
     roles: ["SUPER_ADMIN"],
   },
   {
-    title: "Workspaces",
+    title: "Chopspaces",
     href: "/platform/workspaces",
     icon: Building2,
+    roles: ["SUPER_ADMIN"],
+  },
+  {
+    title: "Onboarding",
+    href: "/platform/onboarding",
+    icon: Inbox,
     roles: ["SUPER_ADMIN"],
   },
 ];
@@ -134,7 +141,7 @@ export function AppSidebar({ role }: AppSidebarProps) {
       ? "Platform admin"
       : role
         ? roleLabel(role)
-        : "Workspace"
+        : "Chopspace"
     : role
       ? roleLabel(role)
       : "Platform";

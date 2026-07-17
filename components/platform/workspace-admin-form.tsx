@@ -72,7 +72,7 @@ export function WorkspaceAdminForm({
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Workspace admin</CardTitle>
+        <CardTitle>Chopspace admin</CardTitle>
         <CardDescription>
           {adminCount === 0
             ? "No admins yet. Invite one to run day-to-day operations."

@@ -7,7 +7,7 @@ import { Button, buttonVariants } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 
 interface ManageWorkspaceButtonProps {
-  workspace: {
+  chopspace: {
     id: string;
     name: string;
     slug: string;
@@ -19,7 +19,7 @@ interface ManageWorkspaceButtonProps {
 }
 
 export function ManageWorkspaceButton({
-  workspace,
+  chopspace,
   variant = "outline",
   size = "sm",
   className,
@@ -41,9 +41,9 @@ export function ManageWorkspaceButton({
         className={cn(buttonVariants({ variant, size }), className)}
         onClick={() =>
           enterWorkspace({
-            id: workspace.id,
-            name: workspace.name,
-            slug: workspace.slug,
+            id: chopspace.id,
+            name: chopspace.name,
+            slug: chopspace.slug,
           })
         }
       >
@@ -60,9 +60,9 @@ export function ManageWorkspaceButton({
       className={className}
       onClick={() =>
         enterWorkspace({
-          id: workspace.id,
-          name: workspace.name,
-          slug: workspace.slug,
+          id: chopspace.id,
+          name: chopspace.name,
+          slug: chopspace.slug,
         })
       }
     >

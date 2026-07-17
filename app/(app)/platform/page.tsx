@@ -22,7 +22,7 @@ export default function PlatformDashboardPage() {
     <PageContainer>
       <PageHeader
         title="Platform"
-        description="Cross-tenant overview of workspaces, ordering activity, and items that need attention."
+        description="Cross-tenant overview of chopspaces, ordering activity, and items that need attention."
         breadcrumbs={
           <Breadcrumb>
             <BreadcrumbList>

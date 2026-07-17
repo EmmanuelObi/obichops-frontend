@@ -51,7 +51,7 @@ export default async function VendorMenuPage({
   return (
     <PageContainer>
       <PageHeader
-        title={`${vendor.name} — Menu`}
+        title={`${vendor.name} - Menu`}
         description={vendor.email}
         breadcrumbs={
           <Breadcrumb>

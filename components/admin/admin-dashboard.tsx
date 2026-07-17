@@ -210,14 +210,14 @@ export function AdminDashboard({
                 <Building2 className="size-4 text-muted-foreground" />
                 Platform
               </CardTitle>
-              <CardDescription>Super-admin workspace management</CardDescription>
+              <CardDescription>Super-admin chopspace management</CardDescription>
             </CardHeader>
             <CardContent>
               <Link
                 href="/platform/workspaces"
                 className={buttonVariants({ variant: "secondary" })}
               >
-                Workspaces
+                Chopspaces
               </Link>
             </CardContent>
           </Card>

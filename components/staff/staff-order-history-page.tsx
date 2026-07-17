@@ -47,7 +47,7 @@ function ExcessPaymentActions({
   const [uploading, setUploading] = useState(false);
 
   if (entry.order.excessCents <= 0) {
-    return <span className="text-sm text-muted-foreground">—</span>;
+    return <span className="text-sm text-muted-foreground">-</span>;
   }
 
   async function handleUpload(file: File) {
@@ -175,7 +175,7 @@ export function StaffOrderHistoryPage() {
             You have {formatNaira(data.outstandingExcessCents)} in outstanding
             excess across {data.outstandingOrderCount}{" "}
             {data.outstandingOrderCount === 1 ? "order" : "orders"}. Upload proof
-            of payment below — your admin will mark it as paid after review.
+            of payment below - your admin will mark it as paid after review.
           </AlertDescription>
         </Alert>
       ) : null}
@@ -206,7 +206,7 @@ export function StaffOrderHistoryPage() {
                         ? DateTime.fromISO(entry.order.submittedAt).toFormat(
                             "d LLL yyyy, h:mm a",
                           )
-                        : "—"}
+                        : "-"}
                     </p>
                   </div>
                   <div className="text-right">

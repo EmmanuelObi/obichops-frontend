@@ -29,7 +29,7 @@ export function WorkspaceSlugField<T extends FieldValues>({
   control,
   name,
   required = false,
-  description = "The short name for your team workspace (e.g. acme-corp).",
+  description = "The short name for your team chopspace (e.g. acme-corp).",
 }: WorkspaceSlugFieldProps<T>) {
   return (
     <FormField
@@ -39,7 +39,7 @@ export function WorkspaceSlugField<T extends FieldValues>({
         <FormItem>
           <div className="flex items-center gap-1.5">
             <FormLabel>
-              Workspace slug{required ? "" : " (optional)"}
+              Chopspace slug{required ? "" : " (optional)"}
             </FormLabel>
             <Tooltip>
               <TooltipTrigger
@@ -62,7 +62,7 @@ export function WorkspaceSlugField<T extends FieldValues>({
             <Input
               {...field}
               autoComplete="organization"
-              placeholder="workspace-slug"
+              placeholder="chopspace-slug"
               onChange={(event) =>
                 field.onChange(event.target.value.toLowerCase())
               }

@@ -49,7 +49,7 @@ export interface FinanceReportStaffRow {
 }
 
 export interface FinanceReport {
-  workspace: { id: string; name: string; timezone: string };
+  chopspace: { id: string; name: string; timezone: string };
   period: {
     from: string;
     to: string;

@@ -40,7 +40,7 @@ export async function apiFetch<T>(
         : {}),
       ...(token ? { Authorization: `Bearer ${token}` } : {}),
       ...(platformWorkspaceId
-        ? { "X-Workspace-Id": platformWorkspaceId }
+        ? { "X-Chopspace-Id": platformWorkspaceId }
         : {}),
       ...headers,
     },

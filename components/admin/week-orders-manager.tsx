@@ -229,14 +229,14 @@ export function WeekOrdersManager({ weekId }: WeekOrdersManagerProps) {
                   <TableCell>{formatNaira(order.totalCents)}</TableCell>
                   <TableCell>{formatNaira(order.companyCoveredCents)}</TableCell>
                   <TableCell>
-                    {order.excessCents > 0 ? formatNaira(order.excessCents) : "—"}
+                    {order.excessCents > 0 ? formatNaira(order.excessCents) : "-"}
                   </TableCell>
                   <TableCell>
                     {order.excessCents > 0
                       ? order.excessAcknowledged
                         ? "Yes"
                         : "No"
-                      : "—"}
+                      : "-"}
                   </TableCell>
                   <TableCell>
                     {order.excessCents > 0 ? (
@@ -279,7 +279,7 @@ export function WeekOrdersManager({ weekId }: WeekOrdersManagerProps) {
                         ) : null}
                       </div>
                     ) : (
-                      "—"
+                      "-"
                     )}
                   </TableCell>
                   <TableCell>
@@ -299,7 +299,7 @@ export function WeekOrdersManager({ weekId }: WeekOrdersManagerProps) {
                         {order.status === "DRAFT" ? "Continue" : "Edit"}
                       </Button>
                     ) : (
-                      "—"
+                      "-"
                     )}
                   </TableCell>
                 </TableRow>

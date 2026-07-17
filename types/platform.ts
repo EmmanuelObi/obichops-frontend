@@ -55,7 +55,7 @@ export interface WorkspaceOverviewMenuWeek extends MenuWeek {
 }
 
 export interface WorkspaceOverview {
-  workspace: Omit<PlatformWorkspace, "stats">;
+  chopspace: Omit<PlatformWorkspace, "stats">;
   stats: WorkspaceOverviewStats;
   recentMenuWeeks: WorkspaceOverviewMenuWeek[];
   vendors: WorkspaceOverviewVendor[];
@@ -68,7 +68,28 @@ export type PlatformAuditAction =
   | "WORKSPACE_REACTIVATED"
   | "WORKSPACE_UPDATED"
   | "WORKSPACE_ADMIN_INVITED"
-  | "WORKSPACE_ENTERED";
+  | "WORKSPACE_ENTERED"
+  | "ONBOARDING_APPROVED"
+  | "ONBOARDING_REJECTED";
+
+export type OnboardingStatus = "PENDING" | "APPROVED" | "REJECTED";
+
+export interface OnboardingRequestItem {
+  id: string;
+  businessName: string;
+  slug: string;
+  contactName: string;
+  email: string;
+  phone: string | null;
+  teamSize: string | null;
+  notes: string | null;
+  status: OnboardingStatus;
+  reviewedByEmail: string | null;
+  reviewedAt: string | null;
+  rejectionReason: string | null;
+  workspaceId: string | null;
+  createdAt: string;
+}
 
 export interface PlatformAuditEntry {
   id: string;

@@ -102,7 +102,7 @@ export function PlatformDashboardPanel() {
           <CardHeader className="pb-2">
             <CardDescription className="flex items-center gap-2">
               <Building2 className="size-4" />
-              Workspaces
+              Chopspaces
             </CardDescription>
             <CardTitle className="text-2xl">{totals.workspaces}</CardTitle>
           </CardHeader>
@@ -121,7 +121,7 @@ export function PlatformDashboardPanel() {
             <CardTitle className="text-2xl">{totals.activeTeamMembers}</CardTitle>
           </CardHeader>
           <CardContent className="text-sm text-muted-foreground">
-            Active invites across all workspaces
+            Active invites across all chopspaces
           </CardContent>
         </Card>
 
@@ -161,13 +161,13 @@ export function PlatformDashboardPanel() {
             Needs attention
           </CardTitle>
           <CardDescription>
-            Workspaces that may need platform operator follow-up.
+            Chopspaces that may need platform operator follow-up.
           </CardDescription>
         </CardHeader>
         <CardContent>
           {attention.length === 0 ? (
             <p className="text-sm text-muted-foreground">
-              All workspaces look healthy.
+              All chopspaces look healthy.
             </p>
           ) : (
             <div className="space-y-3">

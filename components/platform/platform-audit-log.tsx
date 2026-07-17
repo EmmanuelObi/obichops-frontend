@@ -32,6 +32,8 @@ const ACTION_LABELS: Record<PlatformAuditEntry["action"], string> = {
   WORKSPACE_UPDATED: "Updated",
   WORKSPACE_ADMIN_INVITED: "Admin invited",
   WORKSPACE_ENTERED: "Manage mode",
+  ONBOARDING_APPROVED: "Onboarding approved",
+  ONBOARDING_REJECTED: "Onboarding rejected",
 };
 
 interface PlatformAuditLogProps {

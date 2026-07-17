@@ -179,11 +179,11 @@ export function AllowedEmailsManager() {
           "/admin/allowed-emails",
         ),
         apiClient(token).get<{
-          workspace: { allowedEmailDomains: string[] };
+          chopspace: { allowedEmailDomains: string[] };
         }>("/admin/workspace"),
       ]);
       setItems(membersData.allowedEmails);
-      setAllowedDomains(workspaceData.workspace.allowedEmailDomains ?? []);
+      setAllowedDomains(workspaceData.chopspace.allowedEmailDomains ?? []);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to load team members");
     } finally {

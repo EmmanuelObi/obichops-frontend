@@ -119,7 +119,7 @@ export function WorkspaceSettingsForm({
           defaultMaxOrderAmountCents: Math.round(amountNaira * 100),
         },
       });
-      toast.success("Workspace settings saved");
+      toast.success("Chopspace settings saved");
       await onUpdated?.();
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to save settings");
@@ -131,7 +131,7 @@ export function WorkspaceSettingsForm({
       <CardHeader>
         <CardTitle className="flex items-center gap-2">
           <Settings2 className="size-5" />
-          Workspace settings
+          Chopspace settings
         </CardTitle>
         <CardDescription>
           Configure timezone, invite domains, and default order limits without

@@ -20,6 +20,7 @@ import {
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { PasswordInput } from "@/components/ui/password-input";
+import { markReturningVisitor } from "@/lib/returning-visitor";
 
 const loginSchema = z.object({
   email: z.string().email("Enter a valid email"),
@@ -59,6 +60,8 @@ export function LoginForm() {
       setError("Invalid email or password.");
       return;
     }
+
+    markReturningVisitor();
 
     const session = await getSession();
     if (
@@ -147,8 +150,14 @@ export function LoginForm() {
           </Link>
         </p>
         <p className="text-center text-xs text-muted-foreground">
-          New staff are invited by email — check your inbox for a temporary
+          New staff are invited by email - check your inbox for a temporary
           password.
+        </p>
+        <p className="text-center text-sm text-muted-foreground">
+          Setting up a new business?{" "}
+          <Link href="/get-started" className="text-primary hover:underline">
+            Get started
+          </Link>
         </p>
       </form>
     </Form>

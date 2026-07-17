@@ -52,12 +52,12 @@ export function WorkspaceSwitcher() {
       <Select
         value={selection.id}
         onValueChange={(value) => {
-          const workspace = workspaces.find((item) => item.id === value);
-          if (workspace) {
+          const chopspace = workspaces.find((item) => item.id === value);
+          if (chopspace) {
             switchWorkspace({
-              id: workspace.id,
-              name: workspace.name,
-              slug: workspace.slug,
+              id: chopspace.id,
+              name: chopspace.name,
+              slug: chopspace.slug,
             });
           }
         }}
@@ -65,13 +65,13 @@ export function WorkspaceSwitcher() {
         <SelectTrigger className="h-9 w-[min(100%,14rem)]">
           <div className="flex items-center gap-2 truncate">
             <Building2 className="size-4 shrink-0" />
-            <SelectValue placeholder="Select workspace" />
+            <SelectValue placeholder="Select chopspace" />
           </div>
         </SelectTrigger>
         <SelectContent>
-          {workspaces.map((workspace) => (
-            <SelectItem key={workspace.id} value={workspace.id}>
-              {workspace.name}
+          {workspaces.map((chopspace) => (
+            <SelectItem key={chopspace.id} value={chopspace.id}>
+              {chopspace.name}
             </SelectItem>
           ))}
         </SelectContent>

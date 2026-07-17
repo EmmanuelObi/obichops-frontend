@@ -141,7 +141,7 @@ export function FinanceReportsManager() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  const timezone = report?.workspace.timezone ?? "Africa/Lagos";
+  const timezone = report?.chopspace.timezone ?? "Africa/Lagos";
 
   const activeRange = useMemo(() => {
     if (preset === "custom" && customFrom && customTo) {
@@ -221,7 +221,7 @@ export function FinanceReportsManager() {
             Summarise submitted orders for finance review. Menu weeks are
             included by their Monday start date. Rolling periods run through the
             end of the current month so upcoming weeks still appear. Dates use
-            your workspace timezone ({timezone.replace(/_/g, " ")}).
+            your chopspace timezone ({timezone.replace(/_/g, " ")}).
           </CardDescription>
         </CardHeader>
         <CardContent className="flex flex-col gap-4">
@@ -418,7 +418,7 @@ export function FinanceReportsManager() {
                               </div>
                             </TableCell>
                             {granularity === "week" ? (
-                              <TableCell>{bucket.vendor?.name ?? "—"}</TableCell>
+                              <TableCell>{bucket.vendor?.name ?? "-"}</TableCell>
                             ) : null}
                             <TableCell className="text-right tabular-nums">
                               {bucket.orderCount}

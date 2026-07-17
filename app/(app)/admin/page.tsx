@@ -23,7 +23,7 @@ export default async function AdminDashboardPage() {
 
   return (
     <PageContainer>
-      <PageHeader title="Overview" description="Your workspace at a glance." />
+      <PageHeader title="Overview" description="Your chopspace at a glance." />
       <AdminDashboard
         userName={session?.user?.name ?? session?.user?.email}
         isSuperAdmin={session?.user?.role === "SUPER_ADMIN"}

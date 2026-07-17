@@ -33,7 +33,7 @@ export function AppShell({ children, role, email, name }: AppShellProps) {
         {isManagingWorkspace ? (
           <div className="border-b border-primary/15 bg-primary/5 px-4 py-2 text-sm text-muted-foreground">
             Managing <span className="font-medium text-foreground">{displayName}</span>{" "}
-            as platform admin. Changes apply to this workspace.
+            as platform admin. Changes apply to this chopspace.
           </div>
         ) : null}
         <header className="flex h-14 shrink-0 items-center gap-2 border-b border-border/60 bg-background/85 px-4 backdrop-blur-xl lg:h-16">

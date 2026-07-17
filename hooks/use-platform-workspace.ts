@@ -43,15 +43,15 @@ export function usePlatformWorkspace() {
   }, [isSuperAdmin, sessionWorkspaceId, syncFromCookies]);
 
   const enterWorkspace = useCallback(
-    (workspace: PlatformWorkspaceSelection, redirectTo = "/admin") => {
+    (chopspace: PlatformWorkspaceSelection, redirectTo = "/admin") => {
       if (!isSuperAdmin) return;
-      setPlatformWorkspaceCookies(workspace);
-      setSelection(workspace);
+      setPlatformWorkspaceCookies(chopspace);
+      setSelection(chopspace);
 
       const token = session?.accessToken;
       if (token) {
         void apiClient(token)
-          .post(`/platform/workspaces/${workspace.id}/enter`)
+          .post(`/platform/workspaces/${chopspace.id}/enter`)
           .catch(() => undefined);
       }
 
@@ -69,10 +69,10 @@ export function usePlatformWorkspace() {
   }, [router]);
 
   const switchWorkspace = useCallback(
-    (workspace: PlatformWorkspaceSelection) => {
+    (chopspace: PlatformWorkspaceSelection) => {
       if (!isSuperAdmin) return;
-      setPlatformWorkspaceCookies(workspace);
-      setSelection(workspace);
+      setPlatformWorkspaceCookies(chopspace);
+      setSelection(chopspace);
       router.refresh();
     },
     [isSuperAdmin, router],

@@ -49,7 +49,7 @@ const createSchema = z.object({
 type CreateValues = z.input<typeof createSchema>;
 
 function formatLastActivity(value: string | null): string {
-  if (!value) return "—";
+  if (!value) return "-";
   return DateTime.fromISO(value).toFormat("d LLL yyyy");
 }
 
@@ -75,7 +75,7 @@ export function WorkspacesManager() {
       );
       setWorkspaces(data.workspaces);
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Failed to load workspaces");
+      setError(err instanceof Error ? err.message : "Failed to load chopspaces");
     } finally {
       setLoading(false);
     }
@@ -91,10 +91,10 @@ export function WorkspacesManager() {
     try {
       await apiClient(token).post("/platform/workspaces", values);
       form.reset();
-      toast.success("Workspace created");
+      toast.success("Chopspace created");
       await load();
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Failed to create workspace");
+      setError(err instanceof Error ? err.message : "Failed to create chopspace");
     }
   }
 
@@ -107,7 +107,7 @@ export function WorkspacesManager() {
       ) : null}
 
       <div className="rounded-xl border p-4 md:p-6">
-        <h2 className="mb-4 text-lg font-semibold">Create workspace</h2>
+        <h2 className="mb-4 text-lg font-semibold">Create chopspace</h2>
         <Form {...form}>
           <form
             onSubmit={form.handleSubmit(onSubmit)}
@@ -118,7 +118,7 @@ export function WorkspacesManager() {
             name="name"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>Workspace name</FormLabel>
+                <FormLabel>Chopspace name</FormLabel>
                 <FormControl>
                   <Input {...field} placeholder="Obi's Chops Downtown" />
                 </FormControl>
@@ -147,7 +147,7 @@ export function WorkspacesManager() {
           />
           <div className="md:col-span-2">
             <Button type="submit" variant="premium" size="lg" className="h-11 rounded-lg">
-              Create workspace
+              Create chopspace
             </Button>
           </div>
         </form>
@@ -163,15 +163,15 @@ export function WorkspacesManager() {
       ) : workspaces.length === 0 ? (
         <EmptyState
           icon={Building2}
-          title="No workspaces yet"
-          description="Create your first customer workspace to get started."
+          title="No chopspaces yet"
+          description="Create your first customer chopspace to get started."
         />
       ) : (
       <div className="rounded-xl border">
         <Table>
           <TableHeader>
             <TableRow>
-              <TableHead>Workspace</TableHead>
+              <TableHead>Chopspace</TableHead>
               <TableHead>Team</TableHead>
               <TableHead>Vendors</TableHead>
               <TableHead>Week</TableHead>
@@ -181,41 +181,41 @@ export function WorkspacesManager() {
             </TableRow>
           </TableHeader>
           <TableBody>
-              {workspaces.map((workspace) => (
-                <TableRow key={workspace.id}>
+              {workspaces.map((chopspace) => (
+                <TableRow key={chopspace.id}>
                   <TableCell>
                     <div className="space-y-1">
-                      <p className="font-medium">{workspace.name}</p>
+                      <p className="font-medium">{chopspace.name}</p>
                       <div className="flex flex-wrap items-center gap-2">
                         <span className="text-sm text-muted-foreground">
-                          {workspace.slug}
+                          {chopspace.slug}
                         </span>
-                        <Badge variant={workspace.isActive ? "default" : "secondary"}>
-                          {workspace.isActive ? "Active" : "Inactive"}
+                        <Badge variant={chopspace.isActive ? "default" : "secondary"}>
+                          {chopspace.isActive ? "Active" : "Inactive"}
                         </Badge>
                       </div>
                     </div>
                   </TableCell>
-                  <TableCell>{workspace.stats.activeTeamCount}</TableCell>
-                  <TableCell>{workspace.stats.vendorCount}</TableCell>
+                  <TableCell>{chopspace.stats.activeTeamCount}</TableCell>
+                  <TableCell>{chopspace.stats.vendorCount}</TableCell>
                   <TableCell>
-                    {workspace.stats.currentMenuWeekStatus
-                      ? menuWeekStatusLabel(workspace.stats.currentMenuWeekStatus)
-                      : "—"}
+                    {chopspace.stats.currentMenuWeekStatus
+                      ? menuWeekStatusLabel(chopspace.stats.currentMenuWeekStatus)
+                      : "-"}
                   </TableCell>
-                  <TableCell>{workspace.stats.submittedOrdersCount}</TableCell>
+                  <TableCell>{chopspace.stats.submittedOrdersCount}</TableCell>
                   <TableCell>
-                    {formatLastActivity(workspace.stats.lastActivityAt)}
+                    {formatLastActivity(chopspace.stats.lastActivityAt)}
                   </TableCell>
                   <TableCell className="text-right">
                     <div className="flex flex-wrap justify-end gap-2">
                       <WorkspaceStatusActions
-                        workspace={workspace}
+                        chopspace={chopspace}
                         onUpdated={load}
                       />
-                      <ManageWorkspaceButton workspace={workspace} />
+                      <ManageWorkspaceButton chopspace={chopspace} />
                       <Link
-                        href={`/platform/workspaces/${workspace.id}`}
+                        href={`/platform/workspaces/${chopspace.id}`}
                         className={buttonVariants({ variant: "outline", size: "sm" })}
                       >
                         <Eye className="size-4" />

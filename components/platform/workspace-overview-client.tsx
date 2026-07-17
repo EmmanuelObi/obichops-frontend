@@ -54,7 +54,7 @@ export function WorkspaceOverviewClient({
         router.replace("/platform/workspaces");
         return;
       }
-      setError(err instanceof Error ? err.message : "Failed to load workspace");
+      setError(err instanceof Error ? err.message : "Failed to load chopspace");
     } finally {
       setLoading(false);
     }

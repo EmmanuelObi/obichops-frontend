@@ -221,7 +221,7 @@ export function MenuCatalogManager({
       <p className="text-sm text-muted-foreground">
         Persistent catalog for{" "}
         <span className="font-medium text-foreground">{vendorName}</span>.
-        Each item belongs to a specific day — e.g. fried rice can be on Tuesday
+        Each item belongs to a specific day - e.g. fried rice can be on Tuesday
         but not Wednesday. Add items under the day tab where they should appear,
         or use the toggle to temporarily disable a day without deleting it.
         Disabled items are hidden from staff when ordering.
