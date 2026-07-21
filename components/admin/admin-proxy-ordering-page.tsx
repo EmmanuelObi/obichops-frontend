@@ -9,9 +9,20 @@ import { toast } from "sonner";
 import { AdminProxyExcessModal } from "@/components/admin/admin-proxy-excess-modal";
 import { BudgetBar } from "@/components/staff/budget-bar";
 import { DayTabs } from "@/components/staff/day-tabs";
+import { OrderDayProgress } from "@/components/staff/order-day-progress";
 import { OrderingWindowBanner } from "@/components/staff/ordering-window-banner";
 import { EmptyState } from "@/components/layout/empty-state";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -24,7 +35,12 @@ import {
   dayNotesToRecord,
 } from "@/lib/day-notes";
 import { formatNaira, formatQuantity } from "@/lib/format";
-import { orderDayLimitMessage } from "@/lib/order-day-limit";
+import {
+  incompleteOrderDaysDescription,
+  incompleteOrderDaysTitle,
+  isUnderOrderDayAllowance,
+  orderDayLimitMessage,
+} from "@/lib/order-day-limit";
 import { calculateOrderTotals } from "@/lib/order-totals";
 import { computePackSummary, filterFoodCartLines } from "@/lib/pack-lines";
 import { cn } from "@/lib/utils";
@@ -80,6 +96,7 @@ export function AdminProxyOrderingPage({
   const [saving, setSaving] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [excessModalOpen, setExcessModalOpen] = useState(false);
+  const [incompleteDaysOpen, setIncompleteDaysOpen] = useState(false);
   const [cartOpen, setCartOpen] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
 
@@ -400,12 +417,20 @@ export function AdminProxyOrderingPage({
     }
   }
 
-  function handleSubmitClick() {
+  function proceedToSubmit() {
     if (pricedCart.excessCents > 0) {
       setExcessModalOpen(true);
       return;
     }
     void submitOrder();
+  }
+
+  function handleSubmitClick() {
+    if (isUnderOrderDayAllowance(daysWithItems.length, maxOrderDays)) {
+      setIncompleteDaysOpen(true);
+      return;
+    }
+    proceedToSubmit();
   }
 
   const isActiveDayLocked =
@@ -431,7 +456,7 @@ export function AdminProxyOrderingPage({
   }
 
   return (
-    <div className={cn("animate-fade-in space-y-6", canEdit && "pb-28")}>
+    <div className={cn("animate-fade-in space-y-6", canEdit && "pb-40")}>
       {error ? (
         <Alert variant="destructive">
           <AlertDescription>{error}</AlertDescription>
@@ -690,12 +715,19 @@ export function AdminProxyOrderingPage({
 
       {canEdit ? (
         <div className="fixed inset-x-0 bottom-0 z-20 border-t bg-background/95 p-4 shadow-[0_-4px_12px_rgba(0,0,0,0.06)] backdrop-blur supports-[backdrop-filter]:bg-background/90">
-          <div className="mx-auto flex max-w-3xl items-center justify-between gap-3">
-            <div>
-              <p className="text-xs text-muted-foreground">Total</p>
-              <p className="text-lg font-semibold">
-                {formatNaira(pricedCart.totalCents)}
-              </p>
+          <div className="mx-auto flex max-w-3xl flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
+            <div className="min-w-0 space-y-2">
+              <div>
+                <p className="text-xs text-muted-foreground">Total</p>
+                <p className="text-lg font-semibold">
+                  {formatNaira(pricedCart.totalCents)}
+                </p>
+              </div>
+              <OrderDayProgress
+                orderableDays={menuWeek.orderableDays}
+                daysWithItems={daysWithItems}
+                maxOrderDays={maxOrderDays}
+              />
             </div>
             <div className="flex flex-wrap gap-2">
               {isSubmitted && isEditing ? (
@@ -727,12 +759,37 @@ export function AdminProxyOrderingPage({
                     : "Submitting…"
                   : isSubmitted && isEditing
                     ? "Update order"
-                    : "Submit order"}
+                    : `Submit order (${daysWithItems.length}/${maxOrderDays} days)`}
               </Button>
             </div>
           </div>
         </div>
       ) : null}
+
+      <AlertDialog open={incompleteDaysOpen} onOpenChange={setIncompleteDaysOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>
+              {incompleteOrderDaysTitle(daysWithItems.length, maxOrderDays)}
+            </AlertDialogTitle>
+            <AlertDialogDescription>
+              {incompleteOrderDaysDescription(maxOrderDays)}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Keep ordering</AlertDialogCancel>
+            <AlertDialogAction
+              variant="premium"
+              onClick={() => {
+                setIncompleteDaysOpen(false);
+                proceedToSubmit();
+              }}
+            >
+              Submit anyway
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
 
       <AdminProxyExcessModal
         open={excessModalOpen}
