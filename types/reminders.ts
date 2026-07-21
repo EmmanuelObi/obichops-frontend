@@ -7,9 +7,11 @@ export interface ReminderLogEntry {
 
 export const REMINDER_LABELS: Record<string, string> = {
   ORDERING_OPEN: "Ordering open",
+  OPENING_DAY_NUDGE: "Nudge - opening day 5:00 PM",
   FRIDAY_NUDGE_1: "Nudge - Friday 5:00 PM",
   FRIDAY_NUDGE_2: "Nudge - Friday 8:00 PM",
   SATURDAY_NUDGE: "Nudge - Saturday 8:00 AM",
+  CLOSING_SOON: "Nudge - closing soon (1h before)",
 };
 
 /** Legacy log types from before the schedule change. */
@@ -28,9 +30,11 @@ export function reminderLabel(type: string): string {
 
 export function isNudgeReminder(type: string): boolean {
   return (
+    type === "OPENING_DAY_NUDGE" ||
     type === "FRIDAY_NUDGE_1" ||
     type === "FRIDAY_NUDGE_2" ||
     type === "SATURDAY_NUDGE" ||
+    type === "CLOSING_SOON" ||
     type === "FRIDAY_REMINDER_2" ||
     type === "SATURDAY_REMINDER" ||
     type === "PENDING_NUDGE" ||

@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { DateTime } from "luxon";
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useForm } from "react-hook-form";
 import { useSession } from "next-auth/react";
 import { z } from "zod";
@@ -49,6 +49,7 @@ import {
 import {
   Form,
   FormControl,
+  FormDescription,
   FormField,
   FormItem,
   FormLabel,
@@ -74,22 +75,45 @@ import {
 import { apiClient } from "@/lib/api-client";
 import { formatNaira, parseNairaInput } from "@/lib/format";
 import { menuWeekDisplayBadgeKey, menuWeekDisplayLabel } from "@/lib/labels";
+import {
+  DEFAULT_CHOPSPACE_TIMEZONE,
+  defaultOrderWindowLocalInputs,
+  localDateTimeToOffsetIso,
+} from "@/lib/order-window";
 
-const createSchema = z.object({
-  weekStart: z.string().min(1, "Week start is required"),
-  activeVendorId: z.string().min(1, "Select a vendor"),
-  maxBudgetNaira: z.string().min(1, "Budget is required"),
-  maxOrderDaysPerStaff: z.number().int().min(1, "At least 1 day"),
-  orderableDays: z
-    .array(z.enum(["MON", "TUE", "WED", "THU", "FRI", "SAT", "SUN"]))
-    .min(1, "Select at least one orderable day"),
-}).refine(
-  (data) => data.maxOrderDaysPerStaff <= data.orderableDays.length,
-  {
-    message: "Max order days cannot exceed orderable days",
-    path: ["maxOrderDaysPerStaff"],
-  },
-);
+const defaultWeekStart =
+  DateTime.now().plus({ weeks: 1 }).startOf("week").toISODate() ?? "";
+const defaultWindow = defaultOrderWindowLocalInputs(defaultWeekStart);
+
+const createSchema = z
+  .object({
+    weekStart: z.string().min(1, "Week start is required"),
+    activeVendorId: z.string().min(1, "Select a vendor"),
+    maxBudgetNaira: z.string().min(1, "Budget is required"),
+    maxOrderDaysPerStaff: z.number().int().min(1, "At least 1 day"),
+    orderWindowOpensAt: z.string().min(1, "Opening time is required"),
+    orderWindowClosesAt: z.string().min(1, "Closing time is required"),
+    orderableDays: z
+      .array(z.enum(["MON", "TUE", "WED", "THU", "FRI", "SAT", "SUN"]))
+      .min(1, "Select at least one orderable day"),
+  })
+  .refine(
+    (data) => data.maxOrderDaysPerStaff <= data.orderableDays.length,
+    {
+      message: "Max order days cannot exceed orderable days",
+      path: ["maxOrderDaysPerStaff"],
+    },
+  )
+  .refine(
+    (data) =>
+      !data.orderWindowOpensAt ||
+      !data.orderWindowClosesAt ||
+      data.orderWindowClosesAt > data.orderWindowOpensAt,
+    {
+      message: "Closing time must be after opening time",
+      path: ["orderWindowClosesAt"],
+    },
+  );
 
 type CreateValues = z.infer<typeof createSchema>;
 
@@ -111,17 +135,31 @@ export function MenuWeeksManager() {
   const [editWeek, setEditWeek] = useState<MenuWeek | null>(null);
   const [editOrderableDays, setEditOrderableDays] = useState<DayOfWeek[]>([]);
   const [savingEdit, setSavingEdit] = useState(false);
+  const [timezone, setTimezone] = useState(DEFAULT_CHOPSPACE_TIMEZONE);
 
   const form = useForm<CreateValues>({
     resolver: zodResolver(createSchema),
     defaultValues: {
-      weekStart: DateTime.now().plus({ weeks: 1 }).startOf("week").toISODate() ?? "",
+      weekStart: defaultWeekStart,
       activeVendorId: "",
       maxBudgetNaira: "5000",
       maxOrderDaysPerStaff: 2,
+      orderWindowOpensAt: defaultWindow.orderWindowOpensAt,
+      orderWindowClosesAt: defaultWindow.orderWindowClosesAt,
       orderableDays: DEFAULT_ORDERABLE_DAYS,
     },
   });
+
+  const weekStartValue = form.watch("weekStart");
+  const previousWeekStart = useRef(weekStartValue);
+
+  useEffect(() => {
+    if (!weekStartValue || weekStartValue === previousWeekStart.current) return;
+    previousWeekStart.current = weekStartValue;
+    const next = defaultOrderWindowLocalInputs(weekStartValue, timezone);
+    form.setValue("orderWindowOpensAt", next.orderWindowOpensAt);
+    form.setValue("orderWindowClosesAt", next.orderWindowClosesAt);
+  }, [weekStartValue, timezone, form]);
 
   const vendorSelectItems = useMemo(
     () => vendors.map((vendor) => ({ value: vendor.id, label: vendor.name })),
@@ -133,11 +171,19 @@ export function MenuWeeksManager() {
     setLoading(true);
     setError(null);
     try {
-      const [weeksRes, vendorsRes] = await Promise.all([
+      const [weeksRes, vendorsRes, workspaceRes] = await Promise.all([
         apiClient(token).get<{ menuWeeks: MenuWeek[] }>("/admin/menu-weeks"),
         apiClient(token).get<{ vendors: Vendor[] }>("/admin/vendors"),
+        apiClient(token).get<{
+          chopspace: { timezone?: string };
+        }>("/admin/workspace"),
       ]);
       setWeeks(weeksRes.menuWeeks);
+      const workspaceTimezone =
+        workspaceRes.chopspace.timezone ??
+        weeksRes.menuWeeks[0]?.timezone ??
+        DEFAULT_CHOPSPACE_TIMEZONE;
+      setTimezone(workspaceTimezone);
       setVendors(vendorsRes.vendors.filter((v) => v.isActive));
       if (vendorsRes.vendors[0] && !form.getValues("activeVendorId")) {
         form.setValue("activeVendorId", vendorsRes.vendors[0]!.id);
@@ -161,6 +207,19 @@ export function MenuWeeksManager() {
       return;
     }
 
+    const orderWindowOpensAt = localDateTimeToOffsetIso(
+      values.orderWindowOpensAt,
+      timezone,
+    );
+    const orderWindowClosesAt = localDateTimeToOffsetIso(
+      values.orderWindowClosesAt,
+      timezone,
+    );
+    if (!orderWindowOpensAt || !orderWindowClosesAt) {
+      form.setError("orderWindowOpensAt", { message: "Enter a valid date and time" });
+      return;
+    }
+
     setError(null);
     try {
       await apiClient(token).post("/admin/menu-weeks", {
@@ -169,12 +228,19 @@ export function MenuWeeksManager() {
         maxOrderAmountCents,
         maxOrderDaysPerStaff: values.maxOrderDaysPerStaff,
         orderableDays: values.orderableDays,
+        orderWindowOpensAt,
+        orderWindowClosesAt,
       });
+      const nextWeekStart =
+        DateTime.now().plus({ weeks: 2 }).startOf("week").toISODate() ?? "";
+      const nextWindow = defaultOrderWindowLocalInputs(nextWeekStart, timezone);
       form.reset({
-        weekStart: DateTime.now().plus({ weeks: 2 }).startOf("week").toISODate() ?? "",
+        weekStart: nextWeekStart,
         activeVendorId: values.activeVendorId,
         maxBudgetNaira: values.maxBudgetNaira,
         maxOrderDaysPerStaff: values.maxOrderDaysPerStaff,
+        orderWindowOpensAt: nextWindow.orderWindowOpensAt,
+        orderWindowClosesAt: nextWindow.orderWindowClosesAt,
         orderableDays: DEFAULT_ORDERABLE_DAYS,
       });
       toast.success("Menu week created");
@@ -343,6 +409,40 @@ export function MenuWeeksManager() {
                         ref={field.ref}
                       />
                     </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            </div>
+            <div className="grid gap-4 sm:grid-cols-2">
+              <FormField
+                control={form.control}
+                name="orderWindowOpensAt"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Ordering opens</FormLabel>
+                    <FormControl>
+                      <Input {...field} type="datetime-local" />
+                    </FormControl>
+                    <FormDescription>
+                      Chopspace timezone ({timezone.replace(/_/g, " ")})
+                    </FormDescription>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={form.control}
+                name="orderWindowClosesAt"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Ordering closes</FormLabel>
+                    <FormControl>
+                      <Input {...field} type="datetime-local" />
+                    </FormControl>
+                    <FormDescription>
+                      Staff can order while the week is open and before this time
+                    </FormDescription>
                     <FormMessage />
                   </FormItem>
                 )}
