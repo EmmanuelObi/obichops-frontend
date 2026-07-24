@@ -28,12 +28,12 @@ export interface PackMenuItemForDay {
 export function computePackQuantityForDay(
   foodLines: Array<{ quantity: number; packsRequired: number }>,
 ): number {
-  const extraPacks = foodLines.reduce(
+  const packsNeeded = foodLines.reduce(
     (sum, line) => sum + line.packsRequired * line.quantity,
     0,
   );
-  // Every order day includes 1 base pack, plus any extra packs from food items.
-  return 1 + Math.ceil(extraPacks);
+  // Packs come only from food items that require them (no base pack per day).
+  return Math.ceil(packsNeeded);
 }
 
 export function computePackSummary(
@@ -78,6 +78,7 @@ export function computePackSummary(
     const packItem = packByDay.get(day);
     if (!packItem) continue;
     const qty = computePackQuantityForDay(foodLines);
+    if (qty <= 0) continue;
     totalPacks += qty;
     totalPackCents += qty * packItem.priceCents;
     packLines.push({
