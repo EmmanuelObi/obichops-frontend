@@ -97,6 +97,12 @@ const platformNav: NavItem[] = [
     roles: ["SUPER_ADMIN"],
   },
   {
+    title: "Analytics",
+    href: "/platform/analytics",
+    icon: BarChart3,
+    roles: ["SUPER_ADMIN"],
+  },
+  {
     title: "Chopspaces",
     href: "/platform/workspaces",
     icon: Building2,

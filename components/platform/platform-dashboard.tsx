@@ -148,8 +148,14 @@ export function PlatformDashboardPanel() {
               {totals.submittedOrdersThisWeek}
             </CardTitle>
           </CardHeader>
-          <CardContent className="text-sm text-muted-foreground">
-            Submitted orders in open menu weeks
+          <CardContent className="flex flex-col gap-2 text-sm text-muted-foreground">
+            <span>Submitted orders in open menu weeks</span>
+            <Link
+              href="/platform/analytics"
+              className={buttonVariants({ variant: "link", size: "sm", className: "h-auto p-0" })}
+            >
+              View volume analytics →
+            </Link>
           </CardContent>
         </Card>
       </div>

@@ -122,3 +122,40 @@ export interface PlatformDashboard {
   attention: PlatformAttentionItem[];
   recentActivity: PlatformAuditEntry[];
 }
+
+export type PlatformVolumeGranularity = "week" | "month" | "year";
+
+export interface PlatformVolumeBucket {
+  key: string;
+  label: string;
+  orderCount: number;
+  totalCents: number;
+  participatingStaffCount: number;
+  activeChopspacesCount: number;
+  menuWeekCount: number;
+}
+
+export interface PlatformVolumeByWorkspace {
+  workspaceId: string;
+  workspaceName: string;
+  orderCount: number;
+  totalCents: number;
+}
+
+export interface PlatformVolumeReport {
+  period: {
+    from: string;
+    to: string;
+    granularity: PlatformVolumeGranularity;
+  };
+  timezone: string;
+  summary: {
+    orderCount: number;
+    totalCents: number;
+    participatingStaffCount: number;
+    activeChopspacesCount: number;
+    menuWeekCount: number;
+  };
+  buckets: PlatformVolumeBucket[];
+  byWorkspace: PlatformVolumeByWorkspace[];
+}
