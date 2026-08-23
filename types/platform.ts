@@ -130,7 +130,12 @@ export interface PlatformVolumeBucket {
   label: string;
   orderCount: number;
   totalCents: number;
+  companyCoveredCents: number;
+  excessCents: number;
+  excessOutstandingCents: number;
   participatingStaffCount: number;
+  eligibleStaffCount: number;
+  participationRate: number | null;
   activeChopspacesCount: number;
   menuWeekCount: number;
 }
@@ -140,6 +145,11 @@ export interface PlatformVolumeByWorkspace {
   workspaceName: string;
   orderCount: number;
   totalCents: number;
+  companyCoveredCents: number;
+  excessCents: number;
+  participatingStaffCount: number;
+  eligibleStaffCount: number;
+  participationRate: number | null;
 }
 
 export interface PlatformVolumeReport {
@@ -152,7 +162,12 @@ export interface PlatformVolumeReport {
   summary: {
     orderCount: number;
     totalCents: number;
+    companyCoveredCents: number;
+    excessCents: number;
+    excessOutstandingCents: number;
     participatingStaffCount: number;
+    eligibleStaffCount: number;
+    participationRate: number | null;
     activeChopspacesCount: number;
     menuWeekCount: number;
   };
