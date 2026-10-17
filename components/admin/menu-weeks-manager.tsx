@@ -132,8 +132,11 @@ export function MenuWeeksManager() {
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [closeWeekId, setCloseWeekId] = useState<string | null>(null);
+  const [deleteWeek, setDeleteWeek] = useState<MenuWeek | null>(null);
+  const [deletingWeek, setDeletingWeek] = useState(false);
   const [editWeek, setEditWeek] = useState<MenuWeek | null>(null);
   const [editOrderableDays, setEditOrderableDays] = useState<DayOfWeek[]>([]);
+  const [editBudgetNaira, setEditBudgetNaira] = useState("");
   const [savingEdit, setSavingEdit] = useState(false);
   const [timezone, setTimezone] = useState(DEFAULT_CHOPSPACE_TIMEZONE);
 
@@ -142,7 +145,7 @@ export function MenuWeeksManager() {
     defaultValues: {
       weekStart: defaultWeekStart,
       activeVendorId: "",
-      maxBudgetNaira: "5000",
+      maxBudgetNaira: "7200",
       maxOrderDaysPerStaff: 2,
       orderWindowOpensAt: defaultWindow.orderWindowOpensAt,
       orderWindowClosesAt: defaultWindow.orderWindowClosesAt,
@@ -278,6 +281,7 @@ export function MenuWeeksManager() {
   function startEditWeek(week: MenuWeek) {
     setEditWeek(week);
     setEditOrderableDays(week.orderableDays);
+    setEditBudgetNaira(String(week.maxOrderAmountCents / 100));
   }
 
   async function saveEditWeek() {
@@ -286,12 +290,18 @@ export function MenuWeeksManager() {
       toast.error("Select at least one orderable day");
       return;
     }
+    const maxOrderAmountCents = parseNairaInput(editBudgetNaira);
+    if (maxOrderAmountCents === null) {
+      toast.error("Enter a valid budget");
+      return;
+    }
 
     setSavingEdit(true);
     setError(null);
     try {
       await apiClient(token).patch(`/admin/menu-weeks/${editWeek.id}`, {
         orderableDays: editOrderableDays,
+        maxOrderAmountCents,
       });
       toast.success("Menu week updated");
       setEditWeek(null);
@@ -317,6 +327,24 @@ export function MenuWeeksManager() {
       const message = err instanceof Error ? err.message : "Failed to close week";
       setError(message);
       toast.error(message);
+    }
+  }
+
+  async function confirmDeleteWeek() {
+    if (!token || !deleteWeek) return;
+    setDeletingWeek(true);
+    setError(null);
+    try {
+      await apiClient(token).delete(`/admin/menu-weeks/${deleteWeek.id}`);
+      toast.success("Menu week deleted");
+      setDeleteWeek(null);
+      await load();
+    } catch (err) {
+      const message = err instanceof Error ? err.message : "Failed to delete menu week";
+      setError(message);
+      toast.error(message);
+    } finally {
+      setDeletingWeek(false);
     }
   }
 
@@ -551,25 +579,28 @@ export function MenuWeeksManager() {
                             </Link>
                           }
                         />
-                        <DropdownMenuItem onClick={() => startEditWeek(week)}>
-                          Edit orderable days
-                        </DropdownMenuItem>
+                        {week.status === "DRAFT" ? (
+                          <DropdownMenuItem onClick={() => startEditWeek(week)}>
+                            Edit week
+                          </DropdownMenuItem>
+                        ) : null}
                         {week.status === "DRAFT" ? (
                           <DropdownMenuItem onClick={() => void openWeek(week.id)}>
                             Open early
                           </DropdownMenuItem>
                         ) : null}
                         {week.status === "OPEN" ? (
-                          <>
-                            <DropdownMenuSeparator />
-                            <DropdownMenuItem
-                              variant="destructive"
-                              onClick={() => setCloseWeekId(week.id)}
-                            >
-                              Close week
-                            </DropdownMenuItem>
-                          </>
+                          <DropdownMenuItem onClick={() => setCloseWeekId(week.id)}>
+                            Close week
+                          </DropdownMenuItem>
                         ) : null}
+                        <DropdownMenuSeparator />
+                        <DropdownMenuItem
+                          variant="destructive"
+                          onClick={() => setDeleteWeek(week)}
+                        >
+                          Delete week
+                        </DropdownMenuItem>
                       </DropdownMenuContent>
                     </DropdownMenu>
                   </TableCell>
@@ -583,13 +614,24 @@ export function MenuWeeksManager() {
       <Dialog open={editWeek !== null} onOpenChange={(open) => !open && setEditWeek(null)}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>Edit orderable days</DialogTitle>
+            <DialogTitle>Edit week</DialogTitle>
             <DialogDescription>
               {editWeek
                 ? `Week of ${DateTime.fromISO(editWeek.weekStart).setZone(editWeek.timezone).toFormat("d LLL yyyy")}`
                 : null}
             </DialogDescription>
           </DialogHeader>
+          <div className="space-y-2">
+            <label htmlFor="edit-week-budget" className="text-sm font-medium">
+              Budget per day (₦)
+            </label>
+            <Input
+              id="edit-week-budget"
+              inputMode="decimal"
+              value={editBudgetNaira}
+              onChange={(event) => setEditBudgetNaira(event.target.value)}
+            />
+          </div>
           <OrderableDaysField
             value={editOrderableDays}
             onChange={setEditOrderableDays}
@@ -627,6 +669,37 @@ export function MenuWeeksManager() {
               onClick={() => closeWeekId && void closeWeek(closeWeekId)}
             >
               Close week
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      <AlertDialog
+        open={deleteWeek !== null}
+        onOpenChange={(open) => !open && !deletingWeek && setDeleteWeek(null)}
+      >
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+            <AlertDialogDescription>
+              This will permanently delete the menu week
+              {deleteWeek
+                ? ` of ${DateTime.fromISO(deleteWeek.weekStart)
+                    .setZone(deleteWeek.timezone)
+                    .toFormat("d LLL yyyy")}`
+                : ""}
+              , including its orders, reviews, and reminder history. This action
+              cannot be undone.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={deletingWeek}>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              variant="destructive"
+              disabled={deletingWeek}
+              onClick={() => void confirmDeleteWeek()}
+            >
+              {deletingWeek ? "Deleting…" : "Delete week"}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

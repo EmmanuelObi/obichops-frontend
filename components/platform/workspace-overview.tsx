@@ -52,7 +52,7 @@ export function WorkspaceOverviewPanel({
   const settings = chopspace.settings ?? {
     timezone: "Africa/Lagos",
     allowedEmailDomains: [],
-    defaultMaxOrderAmountCents: 500_000,
+    defaultMaxOrderAmountCents: 720_000,
   };
 
   return (
